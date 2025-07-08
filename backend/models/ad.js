@@ -16,7 +16,18 @@ module.exports = (sequelize, DataTypes) => {
   Ad.init({
     title: DataTypes.STRING,
     imageUrl: DataTypes.STRING,
-    link: DataTypes.STRING
+    link: DataTypes.STRING,
+    status: DataTypes.STRING,
+    startDate: DataTypes.DATE,
+    endDate: DataTypes.DATE,
+    createdAt: {
+      allowNull: false,
+      type: DataTypes.DATE
+    },
+    updatedAt: {
+      allowNull: false,
+      type: DataTypes.DATE
+    }
   }, {
     sequelize,
     modelName: 'Ad',
