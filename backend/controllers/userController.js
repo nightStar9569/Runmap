@@ -1,0 +1,141 @@
+const User = require('../models').User;
+const Favorite = require('../models').Favorite;
+const Event = require('../models').Event;
+const Notification = require('../models').Notification;
+const bcrypt = require('bcrypt');
+
+exports.getFavorites = async (req, res) => {
+  const { id } = req.user;
+  const favorites = await Favorite.findAll({
+    where: { userId: id },
+    include: [{ model: Event }]
+  });
+  res.json(favorites);
+};
+
+exports.addFavorite = async (req, res) => {
+  const { id } = req.user;
+  console.log(req.user);
+  const { eventId } = req.body;
+  // Check if event exists
+  const event = await Event.findByPk(eventId);
+  if (!event) {
+    return res.status(404).json({ message: 'Event not found.' });
+  }
+  // Check if favorite already exists
+  const existing = await Favorite.findOne({ where: { id, eventId } });
+  if (existing) {
+    return res.status(409).json({ message: 'Event already in favorites.' });
+  }
+  const favorite = await Favorite.create({ userId: id, eventId });
+  res.json(favorite);
+};
+
+exports.removeFavorite = async (req, res) => {
+  const { id } = req.user;
+  const { eventId } = req.body;
+  const deleted = await Favorite.destroy({ where: { userId: id, eventId } });
+  if (deleted === 0) {
+    return res.status(404).json({ message: 'Favorite not found.' });
+  }
+  res.json({ message: 'Favorite removed.' });
+};
+
+exports.getProfile = async (req, res) => {
+  const { id } = req.user;
+  const user = await User.findByPk(id, {
+    attributes: { exclude: ['password'] }
+  });
+  res.json(user);
+};
+
+exports.updateProfile = async (req, res) => {
+  const { id } = req.user;
+  const { username, email, password, phone, address } = req.body;
+  if (!username && !email && !password && !phone && !address) {
+    return res.status(400).json({ message: 'At least one field (username, email, password) is required.' });
+  }
+  const user = await User.findByPk(id);
+  if (!user) return res.status(404).json({ message: 'User not found.' });
+  const updateData = {};
+  if (username && username !== user.username) {
+    const existingUsername = await User.findOne({ where: { username } });
+    if (existingUsername) {
+      return res.status(409).json({ message: 'Username is already taken.' });
+    }
+    updateData.username = username;
+  }
+  if (email && email !== user.email) {
+    const existingEmail = await User.findOne({ where: { email } });
+    if (existingEmail) {
+      return res.status(409).json({ message: 'Email is already taken.' });
+    }
+    updateData.email = email;
+  }
+  if (password) {
+    if (password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters.' });
+    }
+    updateData.password = await bcrypt.hash(password, 10);
+  }
+  if (phone && phone !== user.phone) {
+    updateData.phone = phone;
+  }
+  if (address && address !== user.address) {
+    updateData.address = address;
+  }
+  await user.update(updateData);
+  const { password: _, ...userData } = user.toJSON();
+  res.json({ message: 'Profile updated successfully.', user: userData });
+};
+
+exports.getNotifications = async (req, res) => {
+  const { id } = req.user;
+  const user = await User.findByPk(id);
+  //check if user membership is active
+  if (user.membershipStatus === 'free') {
+    return res.status(403).json({ message: 'User membership is not active.' });
+  }
+  //check if notification is enabled
+  if (!user.notificationEnabled) {
+    return res.status(403).json({ message: 'Notification is not enabled.' });
+  }
+  const notifications = await Notification.findAll({
+    where: {
+      userId: id,
+    }
+  });
+  res.json(notifications);
+};
+
+exports.getUnreadNotifications = async (req, res) => {
+  const { id } = req.user;
+  const user = await User.findByPk(id);
+  //check if user membership is active
+  if (user.membershipStatus === 'free') {
+    return res.status(403).json({ message: 'User membership is not active.' });
+  }
+  //check if notification is enabled
+  if (!user.notificationEnabled) {
+    return res.status(403).json({ message: 'Notification is not enabled.' });
+  }
+  const notifications = await Notification.findAll({
+    where: {
+      userId: id,
+      isRead: false
+    }
+  });
+  res.json(notifications);
+};
+
+exports.updateNotifications = async (req, res) => {
+  const { id } = req.user;
+  const { notifications } = req.body;
+  const user = await User.findByPk(id);
+  //check if user membership is active
+  if (user.membershipStatus === 'free') {
+    return res.status(403).json({ message: 'User membership is not active.' });
+  }
+  await Notification.update({ message: notifications }, { where: { userId: id } });
+  res.json({ message: 'Notifications updated successfully.' });
+}; 

@@ -10,7 +10,8 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
+      Favorite.belongsTo(models.User, { foreignKey: 'userId' });
+      Favorite.belongsTo(models.Event, { foreignKey: 'eventId' });
     }
   }
   Favorite.init({
@@ -28,5 +29,6 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'Favorite',
   });
+
   return Favorite;
 };
