@@ -9,13 +9,16 @@ const adminRoutes = require('./routes/admin');
 require('./cron/reminder');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use('/auth', authRoutes);
-app.use('events', eventRoutes);
+app.use('/events', eventRoutes);
 app.use('/user', userRoutes);
 app.use('/admin', adminRoutes);
 

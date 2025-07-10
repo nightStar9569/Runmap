@@ -16,5 +16,8 @@ router.put('/profile/update', auth, userController.updateProfile);
 router.get('/notifications', auth, userController.getNotifications);
 router.get('/notifications/unread', auth, userController.getUnreadNotifications);
 router.put('/notifications/update', auth, userController.updateNotifications);
+router.put('/notifications/toggle', auth, userController.toggleNotificationEnabled);
+
+router.post('/upgrade', auth, userController.upgradeMembership);
 
 module.exports = router; 

@@ -76,6 +76,7 @@
     "is-property": "^1.0.2",
     "isexe": "^2.0.0",
     "jackspeak": "^3.4.3",
+    "joi": "^17.13.3",
     "js-beautify": "^1.15.4",
     "js-cookie": "^3.0.5",
     "jsonfile": "^6.1.0",

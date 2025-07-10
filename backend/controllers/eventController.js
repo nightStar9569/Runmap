@@ -1,4 +1,13 @@
 const Event = require('../models').Event;
+const Joi = require('joi');
+
+const createEventSchema = Joi.object({
+  name: Joi.string().min(3).max(100).required(),
+  description: Joi.string().min(10).max(500).required(),
+  date: Joi.date().required(),
+  location: Joi.string().min(3).max(100).required(),
+  imageUrl: Joi.string().min(3).max(255).optional()
+});
 
 // List events with pagination and optional filtering
 exports.listEvents = async (req, res) => {
@@ -30,6 +39,10 @@ exports.getEvent = async (req, res) => {
 // Create a new event
 exports.createEvent = async (req, res) => {
   try {
+    const { error } = createEventSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
     const { name, description, date, applyDeadline, location, imageUrl } = req.body;
     if (!name || !date || !location) {
       return res.status(400).json({ message: 'Name, date, and location are required.' });

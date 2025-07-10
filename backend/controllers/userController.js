@@ -3,6 +3,7 @@ const Favorite = require('../models').Favorite;
 const Event = require('../models').Event;
 const Notification = require('../models').Notification;
 const bcrypt = require('bcrypt');
+const Joi = require('joi');
 
 exports.getFavorites = async (req, res) => {
   const { id } = req.user;
@@ -12,6 +13,14 @@ exports.getFavorites = async (req, res) => {
   });
   res.json(favorites);
 };
+
+const updateProfileSchema = Joi.object({
+  username: Joi.string().min(2).max(20).optional(),
+  email: Joi.string().email().optional(),
+  password: Joi.string().min(8).max(30).optional(),
+  phone: Joi.string().min(10).max(15).optional(),
+  address: Joi.string().min(10).max(100).optional()
+});
 
 exports.addFavorite = async (req, res) => {
   const { id } = req.user;
@@ -51,6 +60,10 @@ exports.getProfile = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   const { id } = req.user;
+  const { error } = updateProfileSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
+  }
   const { username, email, password, phone, address } = req.body;
   if (!username && !email && !password && !phone && !address) {
     return res.status(400).json({ message: 'At least one field (username, email, password) is required.' });
@@ -138,4 +151,33 @@ exports.updateNotifications = async (req, res) => {
   }
   await Notification.update({ message: notifications }, { where: { userId: id } });
   res.json({ message: 'Notifications updated successfully.' });
+};
+
+exports.toggleNotificationEnabled = async (req, res) => {
+  const { id } = req.user;
+  const user = await User.findByPk(id);
+  if (!user) return res.status(404).json({ message: 'User not found.' });
+  if (user.membershipStatus !== 'paid') {
+    return res.status(403).json({ message: 'Only paid members can change notification settings.' });
+  }
+  // Toggle or set explicitly if provided
+  let newValue;
+  if (typeof req.body.enabled === 'boolean') {
+    newValue = req.body.enabled;
+  } else {
+    newValue = !user.notificationEnabled;
+  }
+  await user.update({ notificationEnabled: newValue });
+  res.json({ message: 'Notification setting updated.', notificationEnabled: newValue });
+};
+
+exports.upgradeMembership = async (req, res) => {
+  const { id } = req.user;
+  const user = await User.findByPk(id);
+  if (!user) return res.status(404).json({ message: 'User not found.' });
+  if (user.membershipStatus === 'paid') {
+    return res.status(400).json({ message: 'Already paid.' });
+  }
+  await user.update({ membershipStatus: 'paid' });
+  res.json({ message: 'Membership upgraded to paid.', membershipStatus: 'paid' });
 }; 

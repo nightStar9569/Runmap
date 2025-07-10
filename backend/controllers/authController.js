@@ -1,9 +1,23 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models').User;
+const Joi = require('joi');
 
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || 'SECURITY';
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'SECURITY';
+
+const registerSchema = Joi.object({
+  username: Joi.string().min(2).max(20).required(),
+  email: Joi.string().email().required(),
+  password: Joi.string().min(8).max(30).required(),
+  phone: Joi.string().min(10).max(15).optional(),
+  address: Joi.string().min(3).max(100).optional()
+});
+
+const loginSchema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().min(8).max(30).required()
+});
 
 function generateAccessToken(user) {
   return jwt.sign({ id: user.id, email: user.email, isAdmin: user.isAdmin }, ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
@@ -15,16 +29,21 @@ function generateRefreshToken(user) {
 
 exports.register = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
-    if (!username || !email || !password) {
-      return res.status(400).json({ message: 'All fields are required.' });
+    const { username, email, password, phone, address } = req.body;
+    const { error } = registerSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
     }
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
       return res.status(409).json({ message: 'Email already in use.' });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ username, email, password: hashedPassword });
+    const user = await User.create({
+      username, email, password: hashedPassword, phone, address,
+      membershipStatus: "free",
+      notificationEnabled: "true"
+    });
     res.status(201).json({ message: 'User registered successfully.' });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -32,11 +51,12 @@ exports.register = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
+  const { error } = loginSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
+  }
   try {
     const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ message: 'All fields are required.' });
-    }
     const user = await User.findOne({ where: { email } });
     if (!user) {
       return res.status(401).json({ message: 'User not found.' });
