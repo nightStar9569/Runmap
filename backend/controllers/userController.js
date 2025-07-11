@@ -157,8 +157,8 @@ exports.toggleNotificationEnabled = async (req, res) => {
   const { id } = req.user;
   const user = await User.findByPk(id);
   if (!user) return res.status(404).json({ message: 'User not found.' });
-  if (user.membershipStatus !== 'paid') {
-    return res.status(403).json({ message: 'Only paid members can change notification settings.' });
+  if (user.membershipStatus !== 'paid' && user.membershipStatus !== 'admin') {
+    return res.status(403).json({ message: 'Only paid members and admin can change notification settings.' });
   }
   // Toggle or set explicitly if provided
   let newValue;

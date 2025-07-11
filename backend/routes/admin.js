@@ -7,6 +7,7 @@ const admin = require('../middleware/admin');
 // USERS
 router.get('/users', auth, admin, adminController.listUsers);
 router.post('/users', auth, admin, adminController.getUser);
+router.post('/users/create', auth, admin, adminController.createUser);
 router.post('/users/update', auth, admin, adminController.updateUser);
 router.post('/users/delete', auth, admin, adminController.deleteUser);
 

@@ -14,17 +14,10 @@ import {
   Flex,
   Link as ChakraLink,
   Image,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
-  IconButton,
-  Switch,
   useToast,
-  Tooltip
 } from '@chakra-ui/react';
 import Link from 'next/link';
-import { FaUser, FaPage4, FaSignInAlt, FaSignOutAlt, FaCreditCard, FaBell } from 'react-icons/fa';
+import { FaUser, FaPage4, FaSignInAlt, FaSignOutAlt, FaCreditCard, FaBell, FaPager } from 'react-icons/fa';
 import { useRouter } from 'next/router';
 
 export default function Home() {
@@ -39,7 +32,7 @@ export default function Home() {
   const [locations, setLocations] = useState([]);
   const [date, setDate] = useState('');
 
-  // Placeholder for authentication state
+  // Placeholder for authentication stat
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [membershipStatus, setMembershipStatus] = useState('free');
@@ -83,6 +76,11 @@ export default function Home() {
     };
   }, [router.events]);
 
+  useEffect(() => {
+    fetchEvents();
+    // eslint-disable-next-line
+  }, [page, search, location, date]);
+
   // Fetch user profile on load
   useEffect(() => {
     const fetchProfile = async () => {
@@ -101,81 +99,14 @@ export default function Home() {
 
   return (
     <Box minH="100vh" bg="#f9fafb" display="flex" flexDirection="column" overflowX="hidden" justifyContent="space-between">
-      {/* Page Header Section */}
-      <Box as="nav" w="100vw" px={8} py={3} bg="blue.800" boxShadow="sm" display="flex" alignItems="center" justifyContent="space-between" position="relative" left="50%" right="50%" ml="-50vw" mr="-50vw">
-        <Flex align="center">
-          <Image src="/image/_1.png" alt="Logo" boxSize="40px" borderRadius="md" mr={3} />
-          <Heading size="md" color="white" letterSpacing="wider">RunMap</Heading>
-        </Flex>
-        <Flex align="center" gap={6}>
-          <ChakraLink as={Link} href="/mypage" color="white" fontWeight={600} display="flex" alignItems="center" gap={2}>
-            <FaPage4 /> My Page
-          </ChakraLink>
-          <Menu>
-            <MenuButton
-              as={IconButton}
-              aria-label="User settings"
-              icon={<FaUser />}
-              variant="ghost"
-              color="white"
-              _hover={{ bg: 'blue.700' }}
-            />
-            <MenuList>
-              <MenuItem
-                icon={isLoggedIn ? <FaSignOutAlt /> : <FaSignInAlt />}
-                onClick={() => {
-                  if (!isLoggedIn) router.push('/login');
-                  // else handle logout
-                }}
-              >
-                {isLoggedIn ? 'Log out' : 'Log in'}
-              </MenuItem>
-              <MenuItem
-                icon={<FaCreditCard />}
-                onClick={() => router.push('/payment')}
-              >
-                Payment Page
-              </MenuItem>
-              <MenuItem icon={<FaBell />} closeOnSelect={false}>
-                Notification Settings
-                <Tooltip
-                  label={membershipStatus !== 'paid' ? 'Upgrade to paid membership to enable notifications' : ''}
-                  isDisabled={membershipStatus === 'paid'}
-                  hasArrow
-                  placement="left"
-                >
-                  <Switch
-                    ml={3}
-                    isChecked={notificationsEnabled}
-                    isDisabled={membershipStatus !== 'paid'}
-                    onChange={async () => {
-                      if (membershipStatus !== 'paid') {
-                        toast({ title: 'Only paid members can enable notifications.', status: 'info', duration: 2000 });
-                        return;
-                      }
-                      try {
-                        const res = await api.put('/user/notifications/toggle', { enabled: !notificationsEnabled });
-                        setNotificationsEnabled(res.data.notificationEnabled);
-                        toast({ title: 'Notification setting updated.', status: 'success', duration: 1500 });
-                      } catch (err) {
-                        toast({ title: err.response?.data?.message || 'Failed to update notification setting', status: 'error', duration: 2000 });
-                      }
-                    }}
-                  />
-                </Tooltip>
-              </MenuItem>
-            </MenuList>
-          </Menu>
-        </Flex>
-      </Box>
 
       {/* Top Section */}
       <Box as="header" p={0} textAlign="center" bg="white" boxShadow="sm" w="100vw" position="relative" left="50%" right="50%" ml="-50vw" mr="-50vw">
-
         <Box py={10}>
           <Heading color="blue.600" mb={2}>マラソン大会検索サイト</Heading>
           <Text fontSize="xl" color="gray.600" py={10}>気になる大会がすぐ見つかる、走る人の検索地図</Text>
           <Image src="/image/_1.png" alt="Hero" w="100vw" maxH="320px" objectFit="cover" borderRadius="none" />
+
         </Box>
       </Box>
 
@@ -238,15 +169,19 @@ export default function Home() {
           <Text fontWeight={600} color="blue.600">Page {page} of {totalPages}</Text>
           <Button onClick={() => setPage(p => Math.min(totalPages, p + 1))} isDisabled={page === totalPages}>Next</Button>
         </HStack>
-      </Box>
 
-      {/* Bottom Section: Footer */}
-      <Box as="footer" py={6} textAlign="center" bg="gray.100" mt={10}>
-        <Text color="gray.600" fontSize="sm">
-          &copy; {new Date().getFullYear()} RunMap. All rights reserved. |{' '}
-          <ChakraLink as={Link} href="/privacy-policy" color="blue.500">Privacy Policy</ChakraLink> |{' '}
-          <ChakraLink as={Link} href="/terms" color="blue.500">Terms of Service</ChakraLink>
-        </Text>
+        <Box mt={6}>
+          <a
+            href="https://games.athleteranking.com/gamepref.php"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ textDecoration: 'none' }}
+          >
+            <Button colorScheme="teal" size="lg" variant="solid">
+              外部イベントリストを見る（AthleteRanking.com）
+            </Button>
+          </a>
+        </Box>
       </Box>
     </Box>
   );

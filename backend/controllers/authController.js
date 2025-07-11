@@ -20,7 +20,7 @@ const loginSchema = Joi.object({
 });
 
 function generateAccessToken(user) {
-  return jwt.sign({ id: user.id, email: user.email, isAdmin: user.isAdmin }, ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
+  return jwt.sign({ id: user.id, email: user.email, isAdmin: user.isAdmin }, ACCESS_TOKEN_SECRET, { expiresIn: '7d' });
 }
 
 function generateRefreshToken(user) {
