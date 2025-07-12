@@ -171,13 +171,10 @@ exports.toggleNotificationEnabled = async (req, res) => {
   res.json({ message: 'Notification setting updated.', notificationEnabled: newValue });
 };
 
+// This method is deprecated - use Stripe payment instead
 exports.upgradeMembership = async (req, res) => {
-  const { id } = req.user;
-  const user = await User.findByPk(id);
-  if (!user) return res.status(404).json({ message: 'User not found.' });
-  if (user.membershipStatus === 'paid') {
-    return res.status(400).json({ message: 'Already paid.' });
-  }
-  await user.update({ membershipStatus: 'paid' });
-  res.json({ message: 'Membership upgraded to paid.', membershipStatus: 'paid' });
+  res.status(400).json({ 
+    message: 'Please use the payment system to upgrade your membership.',
+    redirectTo: '/payment'
+  });
 }; 
