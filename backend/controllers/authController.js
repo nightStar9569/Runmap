@@ -2,7 +2,6 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models').User;
 const Joi = require('joi');
-
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || 'SECURITY';
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'SECURITY';
 
@@ -20,7 +19,11 @@ const loginSchema = Joi.object({
 });
 
 function generateAccessToken(user) {
-  return jwt.sign({ id: user.id, email: user.email, isAdmin: user.isAdmin }, ACCESS_TOKEN_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ 
+    id: user.id, 
+    email: user.email, 
+    membershipStatus: user.membershipStatus 
+  }, ACCESS_TOKEN_SECRET, { expiresIn: '7d' });
 }
 
 function generateRefreshToken(user) {
@@ -70,7 +73,15 @@ exports.login = async (req, res) => {
     await user.update({ refreshToken });
     res
       .cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000 })
-      .json({ accessToken, user: { id: user.id, username: user.username, email: user.email, isAdmin: user.isAdmin } });
+      .json({ 
+        accessToken, 
+        user: { 
+          id: user.id, 
+          username: user.username, 
+          email: user.email, 
+          membershipStatus: user.membershipStatus 
+        } 
+      });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }

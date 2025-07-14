@@ -8,22 +8,22 @@ export default function MembershipBadge({ membershipStatus, size = 'md' }) {
         return {
           colorScheme: 'gold',
           icon: FaCrown,
-          text: 'Premium',
-          tooltip: 'Premium Member - Access to all features'
+          text: 'プレミアム',
+          tooltip: 'プレミアムメンバー - すべての機能にアクセス可能'
         };
       case 'admin':
         return {
           colorScheme: 'purple',
           icon: FaCrown,
-          text: 'Admin',
-          tooltip: 'Administrator - Full access'
+          text: '管理者',
+          tooltip: '管理者 - 完全なアクセス権限'
         };
       default:
         return {
           colorScheme: 'gray',
           icon: FaUser,
-          text: 'Free',
-          tooltip: 'Free Member - Upgrade for premium features'
+          text: '無料',
+          tooltip: '無料メンバー - プレミアム機能にアップグレード'
         };
     }
   };

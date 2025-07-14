@@ -1,19 +1,5 @@
-const express = require('express');
-const cors = require('cors');
-const cookieParser = require('cookie-parser');
 const { sequelize, User } = require('./models');
-const authRoutes = require('./routes/auth');
-const eventRoutes = require('./routes/event');
-const userRoutes = require('./routes/user');
-const adminRoutes = require('./routes/admin');
-const paymentRoutes = require('./routes/payment');
-// require('./cron/eventReminders');
-const dotenv = require('dotenv');
 const bcrypt = require('bcrypt');
-
-
-// Load environment variables
-dotenv.config();
 
 // Function to create default admin account
 const createDefaultAdmin = async () => {
@@ -55,26 +41,20 @@ const createDefaultAdmin = async () => {
   }
 };
 
-const app = express();
-app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true
-}));
+// Run the function
+const run = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Database connection established successfully.');
+    
+    await createDefaultAdmin();
+    
+    console.log('✅ Admin account setup completed!');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Database connection failed:', error.message);
+    process.exit(1);
+  }
+};
 
-// Raw body middleware for Stripe webhooks
-app.use('/payment/webhook', express.raw({ type: 'application/json' }));
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-
-app.use('/auth', authRoutes);
-app.use('/events', eventRoutes);
-app.use('/user', userRoutes);
-app.use('/admin', adminRoutes);
-app.use('/payment', paymentRoutes);
-
-sequelize.sync().then(() => {
-  createDefaultAdmin(); // Call the function here
-  app.listen(5000, () => console.log('Server is running on port 5000'));
-});
+run(); 

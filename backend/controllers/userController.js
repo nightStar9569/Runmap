@@ -24,30 +24,32 @@ const updateProfileSchema = Joi.object({
 
 exports.addFavorite = async (req, res) => {
   const { id } = req.user;
-  console.log(req.user);
   const { eventId } = req.body;
+  
   // Check if event exists
   const event = await Event.findByPk(eventId);
   if (!event) {
-    return res.status(404).json({ message: 'Event not found.' });
+    return res.status(404).json({ message: 'イベントが見つかりません' });
   }
+  
   // Check if favorite already exists
-  const existing = await Favorite.findOne({ where: { id, eventId } });
+  const existing = await Favorite.findOne({ where: { userId: id, eventId } });
   if (existing) {
-    return res.status(409).json({ message: 'Event already in favorites.' });
+    return res.status(409).json({ message: 'すでにお気に入りに追加されています' });
   }
+  
   const favorite = await Favorite.create({ userId: id, eventId });
   res.json(favorite);
 };
 
 exports.removeFavorite = async (req, res) => {
   const { id } = req.user;
-  const { eventId } = req.body;
+  const { eventId } = req.params;
   const deleted = await Favorite.destroy({ where: { userId: id, eventId } });
   if (deleted === 0) {
-    return res.status(404).json({ message: 'Favorite not found.' });
+    return res.status(404).json({ message: 'お気に入りが見つかりません' });
   }
-  res.json({ message: 'Favorite removed.' });
+  res.json({ message: 'お気に入りから削除しました' });
 };
 
 exports.getProfile = async (req, res) => {
@@ -105,12 +107,12 @@ exports.updateProfile = async (req, res) => {
 exports.getNotifications = async (req, res) => {
   const { id } = req.user;
   const user = await User.findByPk(id);
-  //check if user membership is active
+  //check if user membership is active (allow admin users)
   if (user.membershipStatus === 'free') {
     return res.status(403).json({ message: 'User membership is not active.' });
   }
-  //check if notification is enabled
-  if (!user.notificationEnabled) {
+  //check if notification is enabled (admin users can bypass this check)
+  if (!user.notificationEnabled && user.membershipStatus !== 'admin') {
     return res.status(403).json({ message: 'Notification is not enabled.' });
   }
   const notifications = await Notification.findAll({
@@ -124,12 +126,12 @@ exports.getNotifications = async (req, res) => {
 exports.getUnreadNotifications = async (req, res) => {
   const { id } = req.user;
   const user = await User.findByPk(id);
-  //check if user membership is active
+  //check if user membership is active (allow admin users)
   if (user.membershipStatus === 'free') {
     return res.status(403).json({ message: 'User membership is not active.' });
   }
-  //check if notification is enabled
-  if (!user.notificationEnabled) {
+  //check if notification is enabled (admin users can bypass this check)
+  if (!user.notificationEnabled && user.membershipStatus !== 'admin') {
     return res.status(403).json({ message: 'Notification is not enabled.' });
   }
   const notifications = await Notification.findAll({
@@ -145,7 +147,7 @@ exports.updateNotifications = async (req, res) => {
   const { id } = req.user;
   const { notifications } = req.body;
   const user = await User.findByPk(id);
-  //check if user membership is active
+  //check if user membership is active (allow admin users)
   if (user.membershipStatus === 'free') {
     return res.status(403).json({ message: 'User membership is not active.' });
   }

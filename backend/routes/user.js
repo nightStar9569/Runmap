@@ -5,8 +5,8 @@ const auth = require('../middleware/auth');
 
 // Favorites
 router.get('/favorites', auth, userController.getFavorites);
-router.post('/favorites/add', auth, userController.addFavorite);
-router.delete('/favorites/remove', auth, userController.removeFavorite);
+router.post('/favorites', auth, userController.addFavorite);
+router.delete('/favorites/:eventId', auth, userController.removeFavorite);
 
 // Profile
 router.get('/profile', auth, userController.getProfile);
