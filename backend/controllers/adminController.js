@@ -200,3 +200,19 @@ exports.deleteAd = async (req, res) => {
   await ad.destroy();
   res.json({ message: 'Ad deleted.' });
 }; 
+
+// Get all cities grouped by region
+exports.getCitiesGroupedByRegion = async (req, res) => {
+  try {
+    const City = require('../models').City;
+    const cities = await City.findAll();
+    const grouped = {};
+    cities.forEach(city => {
+      if (!grouped[city.region]) grouped[city.region] = [];
+      grouped[city.region].push(city);
+    });
+    res.json(grouped);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}; 

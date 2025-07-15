@@ -23,4 +23,7 @@ router.post('/ads/create', auth, admin, adminController.createAd);
 router.post('/ads/update', auth, admin, adminController.updateAd);
 router.post('/ads/delete', auth, admin, adminController.deleteAd);
 
+// Public route for cities
+router.get('/cities-grouped', adminController.getCitiesGroupedByRegion);
+
 module.exports = router; 

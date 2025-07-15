@@ -244,3 +244,29 @@ exports.updateApplicationStatus = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 }; 
+
+// Get events by city and date range
+exports.getEventsByCityAndDate = async (req, res) => {
+  try {
+    const { cityId, start, end } = req.query;
+    const whereClause = {};
+    if (cityId) {
+      whereClause.cityId = cityId;
+    }
+    if (start && end) {
+      whereClause.date = { [Op.between]: [new Date(start), new Date(end)] };
+    } else if (start) {
+      whereClause.date = { [Op.gte]: new Date(start) };
+    } else if (end) {
+      whereClause.date = { [Op.lte]: new Date(end) };
+    }
+    const events = await Event.findAll({
+      where: whereClause,
+      include: [{ model: require('../models').City }],
+      order: [['date', 'ASC']]
+    });
+    res.json(events);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}; 

@@ -6,6 +6,7 @@ const admin = require('../middleware/admin');
 
 // Public routes
 router.get('/', eventController.getEvents);
+router.get('/by-city-date', eventController.getEventsByCityAndDate);
 router.get('/:id', eventController.getEvent);
 
 // Protected routes (require authentication)
