@@ -248,18 +248,12 @@ exports.updateApplicationStatus = async (req, res) => {
 // Get events by city and date range
 exports.getEventsByCityAndDate = async (req, res) => {
   try {
-    const { cityId, start, end } = req.query;
+    const { cityId } = req.query;
     const whereClause = {};
     if (cityId) {
       whereClause.cityId = cityId;
     }
-    if (start && end) {
-      whereClause.date = { [Op.between]: [new Date(start), new Date(end)] };
-    } else if (start) {
-      whereClause.date = { [Op.gte]: new Date(start) };
-    } else if (end) {
-      whereClause.date = { [Op.lte]: new Date(end) };
-    }
+    console.log(whereClause);
     const events = await Event.findAll({
       where: whereClause,
       include: [{ model: require('../models').City }],
@@ -269,4 +263,4 @@ exports.getEventsByCityAndDate = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-}; 
+};

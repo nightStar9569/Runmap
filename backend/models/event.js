@@ -11,16 +11,25 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       Event.belongsTo(models.City, { foreignKey: 'cityId' });
+      Event.hasMany(models.EventApplication, { foreignKey: 'eventId', as: 'applications' });
     }
   }
   Event.init({
     name: DataTypes.STRING,
-    description: DataTypes.TEXT,
     date: DataTypes.DATE,
-    applyDeadline: DataTypes.DATE,
     location: DataTypes.STRING,
-    imageUrl: DataTypes.STRING,
-    cityId: DataTypes.INTEGER
+    cityId: DataTypes.INTEGER,
+    fiveKm: DataTypes.BOOLEAN,
+    tenKm: DataTypes.BOOLEAN,
+    half: DataTypes.BOOLEAN,
+    full: DataTypes.BOOLEAN,
+    ultra: DataTypes.BOOLEAN,
+    elementary: DataTypes.BOOLEAN,
+    parent: DataTypes.BOOLEAN,
+    timed: DataTypes.BOOLEAN,
+    relay: DataTypes.BOOLEAN,
+    trail: DataTypes.BOOLEAN,
+    link_url: DataTypes.STRING
   }, {
     sequelize,
     modelName: 'Event',

@@ -12,28 +12,47 @@ module.exports = {
       name: {
         type: Sequelize.STRING
       },
-      description: {
-        type: Sequelize.TEXT
-      },
       date: {
-        type: Sequelize.DATE
-      },
-      applyDeadline: {
         type: Sequelize.DATE
       },
       location: {
         type: Sequelize.STRING
       },
-      imageUrl: {
+      cityId: {
+        type: Sequelize.INTEGER
+      },
+      fiveKm: {
+        type: Sequelize.BOOLEAN
+      },
+      tenKm: {
+        type: Sequelize.BOOLEAN
+      },
+      half: {
+        type: Sequelize.BOOLEAN
+      },
+      full: {
+        type: Sequelize.BOOLEAN
+      },
+      ultra: {
+        type: Sequelize.BOOLEAN
+      },
+      elementary: {
+        type: Sequelize.BOOLEAN
+      },
+      parent: {
+        type: Sequelize.BOOLEAN
+      },
+      timed: {
+        type: Sequelize.BOOLEAN
+      },
+      relay: {
+        type: Sequelize.BOOLEAN
+      },
+      trail: {
+        type: Sequelize.BOOLEAN
+      },
+      link_urk:{
         type: Sequelize.STRING
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE
       }
     });
   },
