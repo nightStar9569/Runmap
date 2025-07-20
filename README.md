@@ -146,8 +146,8 @@ For detailed payment system setup instructions, see [PAYMENT_SETUP.md](./PAYMENT
 - `GET /user/profile` - Get user profile
 - `PUT /user/profile/update` - Update profile
 - `GET /user/favorites` - Get user favorites
-- `POST /user/favorites/add` - Add favorite
-- `DELETE /user/favorites/remove` - Remove favorite
+- `POST /user/favorites` - Add favorite
+- `DELETE /user/favorites/:eventId` - Remove favorite
 
 ### Payments
 - `POST /payment/create-payment-intent` - Create payment intent
