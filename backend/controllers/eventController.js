@@ -3,6 +3,7 @@ const EventApplication = require('../models').EventApplication;
 const User = require('../models').User;
 const { Op } = require('sequelize');
 const { sendEmail } = require('../utils/email');
+const Joi = require('joi');
 
 // Get all events with pagination and filtering
 exports.getEvents = async (req, res) => {
@@ -82,6 +83,13 @@ exports.getEvent = async (req, res) => {
 
 // Apply for an event
 exports.applyForEvent = async (req, res) => {
+  const schema = Joi.object({
+    eventId: Joi.number().required()
+  });
+  const { error } = schema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
+  }
   try {
     const { eventId } = req.body;
     const userId = req.user.id; // From auth middleware

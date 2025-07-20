@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import api from '../utils/api';
 import {
-  Box, Heading, Text, Spinner, Table, Thead, Tbody, Tr, Th, Td, Input, Button, VStack, HStack, Link as ChakraLink, useColorModeValue, Checkbox, CheckboxGroup, Stack, IconButton, Skeleton, Badge, Image as ChakraImage, Select, Alert, AlertIcon
+  Box, Heading, Text, Spinner, Table, Thead, Tbody, Tr, Th, Td, Input, Button, VStack, HStack, Link as ChakraLink, useColorModeValue, Checkbox, CheckboxGroup, Stack, IconButton, Skeleton, Badge, Image as ChakraImage, Select, Alert, AlertIcon, useToast, Tooltip
 } from '@chakra-ui/react';
 import Link from 'next/link';
 import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
@@ -37,6 +37,7 @@ const defaultNoResultsImg = 'https://undraw.co/api/illustrations/undraw_empty_re
 
 export default function EventsPage() {
   const router = useRouter();
+  const toast = useToast();
   const { cityId, cityName } = router.query;
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,6 +45,8 @@ export default function EventsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const [favoriteIds, setFavoriteIds] = useState([]);
+  const [membershipStatus, setMembershipStatus] = useState('free');
 
   // Filters
   const [name, setName] = useState('');
@@ -79,6 +82,33 @@ export default function EventsPage() {
       .finally(() => setLoading(false));
     // eslint-disable-next-line
   }, [cityId, name, location, startDate, endDate, selectedRaceTypes, currentPage, limit]);
+
+  // Fetch favorites on mount
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      try {
+        const res = await api.get('/user/favorites');
+        // Each favorite has Event or eventId
+        setFavoriteIds(res.data.map(f => f.eventId || (f.Event && f.Event.id)));
+      } catch (err) {
+        // ignore
+      }
+    };
+    fetchFavorites();
+  }, []);
+
+  // Fetch membership status on mount
+  useEffect(() => {
+    const fetchMembership = async () => {
+      try {
+        const res = await api.get('/user/profile');
+        setMembershipStatus(res.data.membershipStatus || 'free');
+      } catch (err) {
+        setMembershipStatus('free');
+      }
+    };
+    fetchMembership();
+  }, []);
 
   // When the user clicks the search button, immediately update debounced filters and reset page
   const handleSearch = () => {
@@ -204,6 +234,7 @@ export default function EventsPage() {
                       <Th color="white">時間走</Th>
                       <Th color="white">駅伝</Th>
                       <Th color="white">トレイル</Th>
+                      <Th color="white">お気に入り</Th>
                     </Tr>
                   </Thead>
                   <Tbody>
@@ -223,7 +254,6 @@ export default function EventsPage() {
                         }}
                         whileHover={{
                           boxShadow: '0 4px 16px rgba(0,0,0,0.13)',
-                          // scale: 1.01, // Removed to prevent overflow-x bar
                         }}
                       >
                         <Td>{event.date ? event.date.slice(0, 10) : ''}</Td>
@@ -243,6 +273,39 @@ export default function EventsPage() {
                         <Td>{event.timed ? '◯' : ''}</Td>
                         <Td>{event.relay ? '◯' : ''}</Td>
                         <Td>{event.trail ? '◯' : ''}</Td>
+                        <Td>
+                          <Tooltip label={membershipStatus !== 'paid' && membershipStatus !== 'admin' ? 'プレミアム会員のみ利用可能' : ''} hasArrow isDisabled={membershipStatus === 'paid' || membershipStatus === 'admin'}>
+                            <Button
+                              size="xs"
+                              colorScheme={favoriteIds.includes(event.id) ? 'red' : 'blue'}
+                              isDisabled={membershipStatus !== 'paid' && membershipStatus !== 'admin'}
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (favoriteIds.includes(event.id)) {
+                                  // Remove from favorites
+                                  try {
+                                    await api.delete(`/user/favorites/${event.id}`);
+                                    setFavoriteIds(favoriteIds.filter(id => id !== event.id));
+                                    toast({ title: 'お気に入りから削除しました', status: 'info', duration: 1500 });
+                                  } catch (err) {
+                                    toast({ title: 'お気に入り削除失敗', status: 'error', duration: 1500 });
+                                  }
+                                } else {
+                                  // Add to favorites
+                                  try {
+                                    await api.post('/user/favorites', { eventId: event.id });
+                                    setFavoriteIds([...favoriteIds, event.id]);
+                                    toast({ title: 'お気に入りに追加しました', status: 'success', duration: 1500 });
+                                  } catch (err) {
+                                    toast({ title: 'お気に入り追加失敗', status: 'error', duration: 1500 });
+                                  }
+                                }
+                              }}
+                            >
+                              {favoriteIds.includes(event.id) ? 'お気に入り削除' : 'お気に入り追加'}
+                            </Button>
+                          </Tooltip>
+                        </Td>
                       </motion.tr>
                     ))}
                   </Tbody>

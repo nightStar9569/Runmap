@@ -9,59 +9,26 @@ import {
   SimpleGrid,
   Text,
   VStack,
-  HStack,
-  Select,
-  Spinner,
-  Flex,
   Link as ChakraLink,
-  // Image,
   useToast,
   Container,
   Badge,
   Icon,
   useColorModeValue,
-  Grid,
-  GridItem,
   Card,
   CardBody,
-  CardHeader,
-  CardFooter,
-  Divider,
-  InputGroup,
-  InputLeftElement,
   useBreakpointValue,
   Tooltip,
   Alert,
   AlertIcon,
-  AlertTitle,
-  AlertDescription,
   Skeleton,
-  Image,
 } from "@chakra-ui/react";
 import Link from "next/link";
 import {
-  FaUser,
-  FaPage4,
-  FaSignInAlt,
-  FaSignOutAlt,
-  FaCreditCard,
-  FaBell,
-  FaPager,
-  FaHeart,
-  FaRegHeart,
-  FaCheck,
-  FaSearch,
   FaMapMarkerAlt,
-  FaCalendarAlt,
-  FaFilter,
-  FaExternalLinkAlt,
   FaRunning,
-  FaTrophy,
-  FaUsers,
-  FaClock,
 } from "react-icons/fa";
 import { useRouter } from "next/router";
-
 import NextImage from "next/image";
 import { motion } from 'framer-motion';
 
@@ -70,61 +37,12 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const router = useRouter();
-
-  // Memoized city image map for performance
-  const cityImageMap = useMemo(
-    () => ({
-      北海道: "/image/hokkaido.png",
-      青森県: "/image/aomori.png",
-      岩手県: "/image/iwate.png",
-      宮城県: "/image/miyagi.png",
-      秋田県: "/image/akita.png",
-      山形県: "/image/yamagata.png",
-      福島県: "/image/fukushima.png",
-      茨城県: "/image/ibaraki.png",
-      栃木県: "/image/tochigi.png",
-      群馬県: "/image/gunma.png",
-      埼玉県: "/image/saitama.png",
-      千葉県: "/image/chiba.png",
-      東京都: "/image/tokyo.png",
-      神奈川県: "/image/kanagawa.png",
-      新潟県: "/image/niigata.png",
-      富山県: "/image/toyama.png",
-      石川県: "/image/ishikawa.png",
-      福井県: "/image/fukui.png",
-      山梨県: "/image/yamanashi.png",
-      長野県: "/image/nagano.png",
-      岐阜県: "/image/gifu.png",
-      静岡県: "/image/shizuoka.png",
-      愛知県: "/image/aichi.png",
-      三重県: "/image/mie.png",
-      滋賀県: "/image/shiga.png",
-      京都府: "/image/kyoto.png",
-      大阪府: "/image/osaka.png",
-      兵庫県: "/image/hyogo.png",
-      奈良県: "/image/nara.png",
-      和歌山県: "/image/wakayama.png",
-      鳥取県: "/image/tottori.png",
-      島根県: "/image/shimane.png",
-      岡山県: "/image/okayama.png",
-      広島県: "/image/hiroshima.png",
-      山口県: "/image/yamaguchi.png",
-      徳島県: "/image/tokushima.png",
-      香川県: "/image/kagawa.png",
-      愛媛県: "/image/ehime.png",
-      高知県: "/image/kochi.png",
-      福岡県: "/image/fukuoka.png",
-      佐賀県: "/image/saga.png",
-      長崎県: "/image/nagasaki.png",
-      熊本県: "/image/kumamoto.png",
-      大分県: "/image/oita.png",
-      宮崎県: "/image/miyazaki.png",
-      鹿児島県: "/image/kagoshima.png",
-      沖縄県: "/image/okinawa.png",
-    }),
-    []
-  );
-  const defaultCityImage = "/image/default_city.png";
+  const isMobile = useBreakpointValue({ base: true, md: false });
+  const bgColor = useColorModeValue('gray.50', 'gray.900');
+  const cardBg = useColorModeValue('white', 'gray.800');
+  const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const textColor = useColorModeValue('gray.800', 'white');
+  const mutedTextColor = useColorModeValue('gray.600', 'gray.400');
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -143,20 +61,20 @@ export default function Home() {
   }, []);
 
   return (
-    <div>
+    <Box minH="100vh" bg={bgColor} pb={10}>
+      {/* Hero Section */}
       <Box
         position="relative"
         width="100%"
         maxW="1900px"
-        height="50%"
         mx="auto"
         mb={8}
-        borderRadius="lg"
+        borderRadius="2xl"
         overflow="hidden"
-        boxShadow="md"
-        aspectRatio={{ md: '5/1' }} // Chakra UI v2+ supports aspectRatio
-        minH={{ base: '200px', md: '320px' }}
-        bg="gray.100"
+        boxShadow="2xl"
+        aspectRatio={{ md: '5/1' }}
+        minH={{ base: '220px', md: '340px' }}
+        bgGradient="linear(to-r, blue.400, purple.400)"
         display="flex"
         alignItems="center"
         justifyContent="center"
@@ -168,33 +86,62 @@ export default function Home() {
           objectFit="cover"
           priority
           quality={90}
+          style={{ opacity: 0.18 }}
         />
+        <VStack zIndex={2} spacing={6} w="full" align="center">
+          <Heading
+            as="h1"
+            size={isMobile ? "lg" : "2xl"}
+            color="white"
+            fontWeight="extrabold"
+            textShadow="0 2px 16px rgba(0,0,0,0.25)"
+            textAlign="center"
+            mt={isMobile ? 8 : 0}
+          >
+            <Icon as={FaRunning} boxSize={10} color="yellow.300" mr={2} />
+            RunMapへようこそ！
+          </Heading>
+          <Text color="white" fontSize={isMobile ? "md" : "xl"} fontWeight="medium" textAlign="center">
+            <Icon as={FaMapMarkerAlt} color="yellow.200" mr={2} />
+            日本全国のマラソン大会を探して、お気に入りに登録しよう！
+          </Text>
+          {/* Removed the yellow search button here */}
+        </VStack>
       </Box>
-      <Box maxW="900px" mx="auto" mt={10} mb={20}>
-        <Heading as="h2" size="lg" mb={6} textAlign={'center'}>
+
+      {/* City Selection Section */}
+      <Container maxW="container.xl" mt={10} mb={20}>
+        <Heading as="h2" size="lg" mb={6} textAlign={'center'} color={textColor}>
+          <Icon as={FaMapMarkerAlt} color="blue.400" mr={2} />
           都道府県別検索
         </Heading>
-        <Text mb={4} textAlign={'center'}>ご覧になりたい都道府県をクリックしてください</Text>
+        <Text mb={4} textAlign={'center'} color={mutedTextColor} fontSize="lg">
+          ご覧になりたい都道府県をクリックしてください
+        </Text>
         {loading ? (
           <SimpleGrid columns={{ base: 2, sm: 3, md: 4, lg: 6 }} spacing={4}>
             {[...Array(12)].map((_, i) => (
               <Box key={i} p={2}>
-                <Skeleton height="80px" borderRadius="md" />
+                <Skeleton height="100px" borderRadius="xl" />
               </Box>
             ))}
           </SimpleGrid>
         ) : error ? (
-          <Text color="red.500">{error}</Text>
+          <Alert status="error" borderRadius="md" mt={4}>
+            <AlertIcon />
+            {error}
+          </Alert>
         ) : (
-          <VStack align="start" spacing={6} w="100%">
+          <VStack align="start" spacing={8} w="100%">
             {Object.keys(cities).map((region, regionIdx) => (
               <Box key={region} w="100%">
-                <Text fontWeight="bold" mb={1}>
+                <Text fontWeight="bold" mb={1} color="blue.600" fontSize="xl">
+                  <Icon as={FaMapMarkerAlt} color="blue.400" mr={2} />
                   {region}
                 </Text>
                 <SimpleGrid
                   columns={{ base: 2, sm: 3, md: 4, lg: 6 }}
-                  spacing={4}
+                  spacing={6}
                 >
                   {cities[region].map((city, cityIdx) => (
                     <motion.div
@@ -203,33 +150,36 @@ export default function Home() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.05 * cityIdx, duration: 0.5, type: 'spring' }}
                     >
-                      <Link
-                        href={{
-                          pathname: "/events",
-                          query: { cityId: city.id, cityName: city.name },
-                        }}
-                        passHref
-                      >
-                        <ChakraLink
-                          display="block"
-                          p={4}
-                          borderRadius="lg"
-                          boxShadow="md"
-                          bg="white"
-                          fontWeight="bold"
-                          textAlign="center"
-                          color="blue.600"
-                          _hover={{
-                            textDecoration: "none",
-                            bg: "blue.50",
-                            boxShadow: "xl",
-                            transform: "scale(1.05)",
-                          }}
-                          transition="all 0.2s"
+                      <Tooltip label={`${city.name}の大会を見る`} hasArrow placement="top">
+                        <Link
+                          href={{ pathname: "/events", query: { cityId: city.id, cityName: city.name } }}
+                          passHref
                         >
-                          {city.name}
-                        </ChakraLink>
-                      </Link>
+                          <Card
+                            display="block"
+                            p={0}
+                            borderRadius="2xl"
+                            boxShadow="lg"
+                            bg={cardBg}
+                            fontWeight="bold"
+                            textAlign="center"
+                            color="blue.700"
+                            _hover={{
+                              textDecoration: "none",
+                              bg: "blue.50",
+                              boxShadow: "2xl",
+                              transform: "scale(1.05)",
+                            }}
+                            transition="all 0.2s"
+                          >
+                            <CardBody p={4}>
+                              <VStack spacing={2}>
+                                <Text fontSize="lg" fontWeight="bold" color={textColor}>{city.name}</Text>
+                              </VStack>
+                            </CardBody>
+                          </Card>
+                        </Link>
+                      </Tooltip>
                     </motion.div>
                   ))}
                 </SimpleGrid>
@@ -237,7 +187,7 @@ export default function Home() {
             ))}
           </VStack>
         )}
-      </Box>
-    </div>
+      </Container>
+    </Box>
   );
 }

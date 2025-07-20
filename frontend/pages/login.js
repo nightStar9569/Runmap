@@ -46,8 +46,10 @@ import {
   FaMobile,
   FaDesktop,
   FaHeart,
-  FaBell
+  FaBell,
+  FaArrowRight
 } from 'react-icons/fa';
+import { motion } from 'framer-motion';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -68,9 +70,9 @@ export default function Login() {
 
   const validate = () => {
     if (!email) return 'メールアドレスが必要です';
-    if (!/\S+@\S+\.\S+/.test(email)) return '有効なメールアドレスを入力してください';
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return '有効なメールアドレスを入力してください';
     if (!password) return 'パスワードが必要です';
-    if (password.length < 8) return 'パスワードは8文字以上で入力してください';
+    if (password.length < 8 || password.length > 30) return 'パスワードは8〜30文字で入力してください';
     return '';
   };
 
@@ -103,76 +105,46 @@ export default function Login() {
   };
 
   return (
-    <Box minH="100vh" bg={bgColor} py={{ base: 4, md: 8 }}>
-      <Container maxW="container.lg">
-        <VStack spacing={8}>
-          {/* Header Section */}
-          <VStack spacing={4} textAlign="center" maxW="2xl">
-            <Flex align="center" gap={3}>
-              <Box position="relative">
-                <Image 
-                  src="/image/_1.png" 
-                  alt="RunMap Logo" 
-                  boxSize={{ base: "48px", md: "64px" }} 
-                  borderRadius="full"
-                  border="3px"
-                  borderColor="blue.500"
-                />
-                <Badge 
-                  position="absolute" 
-                  top="-2" 
-                  right="-2" 
-                  colorScheme="green" 
-                  variant="solid" 
-                  size="sm"
-                  borderRadius="full"
-                >
-                  <Icon as={FaRunning} boxSize={2} />
-                </Badge>
-              </Box>
-              <VStack align="start" spacing={0}>
-                <Heading size={{ base: "lg", md: "xl" }} color="blue.600" fontWeight="bold" fontFamily={fontFamily.heading}>
-                  RunMap
-                </Heading>
-                <Text fontSize={{ base: "sm", md: "md" }} color={mutedTextColor} fontWeight="medium" fontFamily={fontFamily.body}>
-                  マラソン大会検索サイト
-                </Text>
-              </VStack>
-            </Flex>
-            <Text fontSize={{ base: "lg", md: "xl" }} color={textColor} fontWeight="medium" fontFamily={fontFamily.heading}>
-              アカウントにログイン
-            </Text>
-            <Text color={mutedTextColor} maxW="md" fontFamily={fontFamily.body}>
-              マラソン大会の検索、お気に入り登録、通知機能を利用するにはログインしてください
-            </Text>
-          </VStack>
-
-          {/* Login Form */}
-          <Card 
-            bg={cardBg} 
-            shadow="xl" 
-            border="1px" 
+    <Box minH="100vh" bg={bgColor} py={10}>
+      <Container maxW="lg" centerContent>
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, type: 'spring' }}
+          style={{ width: '100%' }}
+        >
+          <Card
+            bg={cardBg}
+            shadow="2xl"
+            border="1px"
             borderColor={borderColor}
             w="full"
-            maxW="md"
+            maxW="2xl"
             _hover={{ shadow: '2xl' }}
             transition="all 0.3s ease"
           >
             <CardHeader pb={4}>
-              <VStack spacing={2}>
-                <Icon as={FaSignInAlt} boxSize={8} color="blue.500" />
-                <Heading size="md" color={textColor} fontFamily={fontFamily.heading}>ログイン</Heading>
-                <Text fontSize="sm" color={mutedTextColor} textAlign="center" fontFamily={fontFamily.body}>
-                  メールアドレスとパスワードを入力してください
+              <VStack spacing={3}>
+                <Icon as={FaSignInAlt} boxSize={10} color="blue.500" />
+                <Heading size="lg" color={textColor} fontWeight="bold" textAlign="center">
+                  ログイン
+                </Heading>
+                <Text fontSize="md" color={mutedTextColor} textAlign="center">
+                  メールアドレスとパスワードでログインしてください
                 </Text>
               </VStack>
             </CardHeader>
-            
             <CardBody pt={0}>
+              {error && (
+                <Alert status="error" mb={4} borderRadius="md">
+                  <AlertIcon />
+                  {error}
+                </Alert>
+              )}
               <form onSubmit={handleSubmit} autoComplete="on">
                 <VStack spacing={6}>
                   <FormControl isRequired>
-                    <FormLabel color={textColor} fontWeight="medium" fontFamily={fontFamily.body}>
+                    <FormLabel color={textColor} fontWeight="medium">
                       メールアドレス
                     </FormLabel>
                     <InputGroup>
@@ -187,9 +159,10 @@ export default function Login() {
                         size="lg"
                         bg="white"
                         borderColor={borderColor}
+                        borderRadius="xl"
                         _focus={{ 
                           borderColor: 'blue.500', 
-                          boxShadow: '0 0 0 1px #3182ce',
+                          boxShadow: '0 0 0 2px #3182ce',
                           bg: 'white'
                         }}
                         _hover={{ borderColor: 'blue.300' }}
@@ -197,9 +170,8 @@ export default function Login() {
                       />
                     </InputGroup>
                   </FormControl>
-
                   <FormControl isRequired>
-                    <FormLabel color={textColor} fontWeight="medium" fontFamily={fontFamily.body}>
+                    <FormLabel color={textColor} fontWeight="medium">
                       パスワード
                     </FormLabel>
                     <InputGroup>
@@ -210,13 +182,14 @@ export default function Login() {
                         type={showPassword ? 'text' : 'password'}
                         value={password}
                         onChange={e => setPassword(e.target.value)}
-                        placeholder="パスワードを入力"
+                        placeholder="8〜30文字で入力"
                         size="lg"
                         bg="white"
                         borderColor={borderColor}
+                        borderRadius="xl"
                         _focus={{ 
                           borderColor: 'blue.500', 
-                          boxShadow: '0 0 0 1px #3182ce',
+                          boxShadow: '0 0 0 2px #3182ce',
                           bg: 'white'
                         }}
                         _hover={{ borderColor: 'blue.300' }}
@@ -236,146 +209,39 @@ export default function Login() {
                       </InputRightElement>
                     </InputGroup>
                   </FormControl>
-
-                  {error && (
-                    <Alert 
-                      status="error" 
-                      borderRadius="lg"
-                      variant="subtle"
-                      border="1px"
-                      borderColor="red.200"
-                    >
-                      <AlertIcon />
-                      <Box>
-                        <Text fontWeight="medium">ログインエラー</Text>
-                        <Text fontSize="sm">{error}</Text>
-                      </Box>
-                    </Alert>
-                  )}
-
                   <Button
-                    colorScheme="blue"
                     type="submit"
+                    colorScheme="blue"
                     size="lg"
                     w="full"
                     isLoading={loading}
                     loadingText="ログイン中..."
-                    leftIcon={loading ? <Spinner size="sm" /> : <FaSignInAlt />}
-                    _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
+                    leftIcon={<FaSignInAlt />}
+                    rightIcon={<FaArrowRight />}
+                    borderRadius="full"
+                    fontSize="xl"
+                    shadow="md"
+                    as={motion.button}
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.98 }}
+                    _hover={{ bg: 'blue.600', shadow: 'xl' }}
                     transition="all 0.2s"
                   >
                     ログイン
                   </Button>
+                  <HStack justify="center" w="full">
+                    <Text color={mutedTextColor} fontSize="md">アカウントをお持ちでない方は</Text>
+                    <NextLink href="/register" passHref legacyBehavior>
+                      <Button as="a" variant="link" colorScheme="blue" fontWeight="bold" fontSize="md">
+                        新規登録
+                      </Button>
+                    </NextLink>
+                  </HStack>
                 </VStack>
               </form>
             </CardBody>
           </Card>
-
-          {/* Registration Link */}
-          <Card 
-            bg={cardBg} 
-            shadow="md" 
-            border="1px" 
-            borderColor={borderColor}
-            w="full"
-            maxW="md"
-          >
-            <CardBody textAlign="center">
-              <VStack spacing={3}>
-                <Text color={mutedTextColor}>
-                  アカウントをお持ちでない方は
-                </Text>
-                <Button
-                  as={NextLink}
-                  href="/register"
-                  colorScheme="teal"
-                  variant="outline"
-                  size="lg"
-                  w="full"
-                  leftIcon={<FaUserPlus />}
-                  _hover={{ transform: 'translateY(-1px)', boxShadow: 'md' }}
-                  transition="all 0.2s"
-                >
-                  新規登録
-                </Button>
-              </VStack>
-            </CardBody>
-          </Card>
-
-          {/* Features Section */}
-          <VStack spacing={6} maxW="4xl" w="full">
-            <Heading size="md" color={textColor} textAlign="center" fontFamily={fontFamily.heading}>
-              ログインすると利用できる機能
-            </Heading>
-            
-            <HStack 
-              spacing={6} 
-              wrap="wrap" 
-              justify="center"
-              w="full"
-            >
-              <Card 
-                bg={cardBg} 
-                shadow="md" 
-                border="1px" 
-                borderColor={borderColor}
-                p={4}
-                minW={{ base: "full", sm: "200px" }}
-                textAlign="center"
-                _hover={{ transform: 'translateY(-4px)', shadow: 'lg' }}
-                transition="all 0.3s ease"
-              >
-                <VStack spacing={3}>
-                  <Icon as={FaHeart} boxSize={6} color="red.500" />
-                  <Text fontWeight="medium" color={textColor}>お気に入り登録</Text>
-                  <Text fontSize="sm" color={mutedTextColor}>
-                    気になる大会をお気に入りに登録
-                  </Text>
-                </VStack>
-              </Card>
-
-              <Card 
-                bg={cardBg} 
-                shadow="md" 
-                border="1px" 
-                borderColor={borderColor}
-                p={4}
-                minW={{ base: "full", sm: "200px" }}
-                textAlign="center"
-                _hover={{ transform: 'translateY(-4px)', shadow: 'lg' }}
-                transition="all 0.3s ease"
-              >
-                <VStack spacing={3}>
-                  <Icon as={FaBell} boxSize={6} color="blue.500" />
-                  <Text fontWeight="medium" color={textColor}>通知機能</Text>
-                  <Text fontSize="sm" color={mutedTextColor}>
-                    大会の申込締切や開始日を通知
-                  </Text>
-                </VStack>
-              </Card>
-
-              <Card 
-                bg={cardBg} 
-                shadow="md" 
-                border="1px" 
-                borderColor={borderColor}
-                p={4}
-                minW={{ base: "full", sm: "200px" }}
-                textAlign="center"
-                _hover={{ transform: 'translateY(-4px)', shadow: 'lg' }}
-                transition="all 0.3s ease"
-              >
-                <VStack spacing={3}>
-                  <Icon as={FaShieldAlt} boxSize={6} color="green.500" />
-                  <Text fontWeight="medium" color={textColor}>セキュリティ</Text>
-                  <Text fontSize="sm" color={mutedTextColor}>
-                    安全なアカウント管理
-                  </Text>
-                </VStack>
-              </Card>
-            </HStack>
-          </VStack>
-        </VStack>
+        </motion.div>
       </Container>
     </Box>
   );

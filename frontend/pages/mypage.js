@@ -135,10 +135,24 @@ const MyPage = () => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
   };
 
+  const validateProfile = () => {
+    if (!profile.name || profile.name.length < 2 || profile.name.length > 20) return 'ユーザー名は2〜20文字で入力してください';
+    if (!profile.email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(profile.email)) return '有効なメールアドレスを入力してください';
+    if (profile.phone && !/^\d{10,15}$/.test(profile.phone)) return '電話番号は10〜15桁の数字で入力してください';
+    if (profile.address && (profile.address.length < 3 || profile.address.length > 100)) return '住所は3〜100文字で入力してください';
+    return '';
+  };
+
   const handleProfileSave = async (e) => {
     e.preventDefault();
     setSaving(true);
     setError('');
+    const validationError = validateProfile();
+    if (validationError) {
+      setError(validationError);
+      setSaving(false);
+      return;
+    }
     try {
       const payload = {
         username: profile.name,

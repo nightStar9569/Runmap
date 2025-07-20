@@ -95,7 +95,6 @@ const AdminDashboard = () => {
   const [tab, setTab] = useState(0);
   const [users, setUsers] = useState([]);
   const [events, setEvents] = useState([]);
-  const [ads, setAds] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -116,15 +115,10 @@ const AdminDashboard = () => {
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [eventForm, setEventForm] = useState({ name: '', date: '', location: '', description: '', applyDeadline: '', imageUrl: '' });
-  // Modal state for Ads
-  const [isAdModalOpen, setIsAdModalOpen] = useState(false);
-  const [editingAd, setEditingAd] = useState(null);
-  const [adForm, setAdForm] = useState({ title: '', content: '', imageUrl: '', link: '', startDate: '', endDate: '' });
 
   // Error states for modals (must be at top level)
   const [userError, setUserError] = useState('');
   const [eventError, setEventError] = useState('');
-  const [adError, setAdError] = useState('');
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -135,13 +129,10 @@ const AdminDashboard = () => {
   // Separate pagination for each tab
   const [userPage, setUserPage] = useState(1);
   const [eventPage, setEventPage] = useState(1);
-  const [adPage, setAdPage] = useState(1);
   const [userTotalPages, setUserTotalPages] = useState(1);
   const [eventTotalPages, setEventTotalPages] = useState(1);
-  const [adTotalPages, setAdTotalPages] = useState(1);
   const [userTotalItems, setUserTotalItems] = useState(0);
   const [eventTotalItems, setEventTotalItems] = useState(0);
-  const [adTotalItems, setAdTotalItems] = useState(0);
 
   // Helper to get auth header
   const getAuthHeader = () => {
@@ -191,11 +182,6 @@ const AdminDashboard = () => {
         setEvents(res.data.data || []);
         setEventTotalItems(res.data.totalItems || 0);
         setEventTotalPages(res.data.totalPages || 1);
-      } else if (type === 'ads') {
-        const res = await api.get(`/admin/ads?page=${adPage}&limit=${itemsPerPage}`, { headers: getAuthHeader() });
-        setAds(res.data.data || []);
-        setAdTotalItems(res.data.totalItems || 0);
-        setAdTotalPages(res.data.totalPages || 1);
       }
     } catch (err) {
       console.error('Fetch error:', err);
@@ -210,14 +196,12 @@ const AdminDashboard = () => {
     if (isAdmin === true) { // Only fetch when admin status is confirmed
       if (tab === 0) fetchData('users');
       if (tab === 1) fetchData('events');
-      if (tab === 2) fetchData('ads');
     }
-  }, [tab, isAdmin, userPage, eventPage, adPage, itemsPerPage]);
+  }, [tab, isAdmin, userPage, eventPage, itemsPerPage]);
 
   // Calculate stats
   const totalUsers = userTotalItems;
   const totalEvents = eventTotalItems;
-  const totalAds = adTotalItems;
   const premiumUsers = users.filter(user => user.membershipStatus === 'paid').length;
   const activeEvents = events.filter(event => new Date(event.date) > new Date()).length;
 
@@ -227,8 +211,6 @@ const AdminDashboard = () => {
       setUserPage(newPage);
     } else if (type === 'events') {
       setEventPage(newPage);
-    } else if (type === 'ads') {
-      setAdPage(newPage);
     }
   };
 
@@ -237,7 +219,6 @@ const AdminDashboard = () => {
     // Reset to first page when changing items per page
     setUserPage(1);
     setEventPage(1);
-    setAdPage(1);
   };
 
   if (isAdmin === null) {
@@ -292,10 +273,23 @@ const AdminDashboard = () => {
     setIsUserModalOpen(true);
   };
   const closeUserModal = () => setIsUserModalOpen(false);
+
+  const validateUserForm = () => {
+    if (!userForm.username || userForm.username.length < 2 || userForm.username.length > 20) return 'ユーザー名は2〜20文字で入力してください';
+    if (!userForm.email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(userForm.email)) return '有効なメールアドレスを入力してください';
+    if (!editingUser && (!userForm.password || userForm.password.length < 8 || userForm.password.length > 30)) return 'パスワードは8〜30文字で入力してください';
+    if (userForm.password && (userForm.password.length < 8 || userForm.password.length > 30)) return 'パスワードは8〜30文字で入力してください';
+    if (userForm.phone && !/^\d{10,15}$/.test(userForm.phone)) return '電話番号は10〜15桁の数字で入力してください';
+    if (userForm.address && (userForm.address.length < 3 || userForm.address.length > 100)) return '住所は3〜100文字で入力してください';
+    if (userForm.membershipStatus && !['free','paid','admin'].includes(userForm.membershipStatus)) return 'メンバーシップはfree, paid, adminのいずれかを選択してください';
+    return '';
+  };
+
   const handleSaveUser = async () => {
     setUserError('');
-    if (!userForm.username || !userForm.email || (!editingUser && !userForm.password)) {
-      setUserError('ユーザー名、メールアドレス、パスワードは必須です。');
+    const validationError = validateUserForm();
+    if (validationError) {
+      setUserError(validationError);
       return;
     }
     try {
@@ -351,10 +345,21 @@ const AdminDashboard = () => {
     setIsEventModalOpen(true);
   };
   const closeEventModal = () => setIsEventModalOpen(false);
+  const validateEventForm = () => {
+    if (!eventForm.name || eventForm.name.length < 2 || eventForm.name.length > 100) return 'イベント名は2〜100文字で入力してください';
+    if (!eventForm.date) return '開催日は必須です';
+    if (!eventForm.location || eventForm.location.length < 2 || eventForm.location.length > 100) return '場所は2〜100文字で入力してください';
+    if (eventForm.description && eventForm.description.length > 1000) return '説明は1000文字以内で入力してください';
+    if (!eventForm.applyDeadline) return '申込締切は必須です';
+    if (eventForm.imageUrl && eventForm.imageUrl.length > 0 && !/^https?:\/\/.+/.test(eventForm.imageUrl)) return '画像URLは有効なURLを入力してください';
+    return '';
+  };
+
   const handleSaveEvent = async () => {
     setEventError('');
-    if (!eventForm.name || !eventForm.date) {
-      setEventError('イベント名と日付は必須です。');
+    const validationError = validateEventForm();
+    if (validationError) {
+      setEventError(validationError);
       return;
     }
     try {
@@ -391,65 +396,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Ad CRUD handlers
-  const openEditAdModal = (ad) => {
-    setEditingAd(ad);
-    setAdForm({
-      title: ad.title || '',
-      content: ad.content || '',
-      imageUrl: ad.imageUrl || '',
-      link: ad.link || '',
-      startDate: ad.startDate || '',
-      endDate: ad.endDate || '',
-    });
-    setIsAdModalOpen(true);
-  };
-  const openCreateAdModal = () => {
-    setEditingAd(null);
-    setAdForm({ title: '', content: '', imageUrl: '', link: '', startDate: '', endDate: '' });
-    setIsAdModalOpen(true);
-  };
-  const closeAdModal = () => setIsAdModalOpen(false);
-  const handleSaveAd = async () => {
-    setAdError('');
-    if (!adForm.title) {
-      setAdError('広告タイトルは必須です。');
-      return;
-    }
-    try {
-      if (editingAd) {
-        await api.post('/admin/ads/update', { id: editingAd.id, ...adForm }, { headers: getAuthHeader() });
-        toast({
-          title: '広告を更新しました',
-          status: 'success',
-          duration: 3000,
-        });
-      } else {
-        await api.post('/admin/ads/create', adForm, { headers: getAuthHeader() });
-        toast({
-          title: '広告を作成しました',
-          status: 'success',
-          duration: 3000,
-        });
-      }
-      closeAdModal();
-      fetchData('ads');
-    } catch (err) {
-      setAdError(err.response?.data?.message || '広告の保存に失敗しました。');
-    }
-  };
-  const handleDeleteAd = async (id) => {
-    if (window.confirm('この広告を削除しますか？')) {
-      await api.post('/admin/ads/delete', { id }, { headers: getAuthHeader() });
-      toast({
-        title: '広告を削除しました',
-        status: 'info',
-        duration: 3000,
-      });
-      fetchData('ads');
-    }
-  };
-
   return (
     <Box minH="100vh" bg={bgColor} py={{ base: 4, md: 8 }}>
       <Container maxW="container.xl">
@@ -481,7 +427,7 @@ const AdminDashboard = () => {
               </VStack>
             </Flex>
             <Text fontSize={{ base: "md", md: "lg" }} color={mutedTextColor} maxW="md">
-              ユーザー、イベント、広告の管理とシステム監視
+              ユーザー、イベントの管理とシステム監視
             </Text>
           </VStack>
 
@@ -548,25 +494,6 @@ const AdminDashboard = () => {
                 </Stat>
               </VStack>
             </Card>
-
-            <Card 
-              bg={cardBg} 
-              shadow="md" 
-              border="1px" 
-              borderColor={borderColor}
-              p={6}
-              textAlign="center"
-              _hover={{ transform: 'translateY(-4px)', shadow: 'lg' }}
-              transition="all 0.3s ease"
-            >
-              <VStack spacing={3}>
-                <Icon as={FaAd} boxSize={8} color="purple.500" />
-                <Stat>
-                  <StatNumber color="purple.500">{totalAds}</StatNumber>
-                  <StatLabel color={mutedTextColor}>総広告数</StatLabel>
-                </Stat>
-              </VStack>
-            </Card>
           </Grid>
 
           {/* Main Dashboard */}
@@ -602,12 +529,6 @@ const AdminDashboard = () => {
                     <HStack spacing={2}>
                       <Icon as={FaCalendarAlt} />
                       <Text>イベント管理</Text>
-                    </HStack>
-                  </Tab>
-                  <Tab>
-                    <HStack spacing={2}>
-                      <Icon as={FaAd} />
-                      <Text>広告管理</Text>
                     </HStack>
                   </Tab>
                 </TabList>
@@ -787,7 +708,7 @@ const AdminDashboard = () => {
                         </ModalHeader>
                         <ModalBody>
                           <VStack spacing={4}>
-                            <FormControl>
+                            <FormControl isInvalid={!!userError && userError.includes('ユーザー名')}>
                               <FormLabel color={textColor} fontWeight="medium">ユーザー名</FormLabel>
                               <InputGroup>
                                 <InputLeftElement>
@@ -799,9 +720,12 @@ const AdminDashboard = () => {
                                   placeholder="ユーザー名を入力"
                                 />
                               </InputGroup>
+                              {userError && userError.includes('ユーザー名') && (
+                                <Text fontSize="sm" color="red.500" mt={1}>{userError}</Text>
+                              )}
                             </FormControl>
                             
-                            <FormControl>
+                            <FormControl isInvalid={!!userError && userError.includes('メールアドレス')}>
                               <FormLabel color={textColor} fontWeight="medium">メールアドレス</FormLabel>
                               <InputGroup>
                                 <InputLeftElement>
@@ -813,9 +737,12 @@ const AdminDashboard = () => {
                                   placeholder="example@email.com"
                                 />
                               </InputGroup>
+                              {userError && userError.includes('メールアドレス') && (
+                                <Text fontSize="sm" color="red.500" mt={1}>{userError}</Text>
+                              )}
                             </FormControl>
                             
-                            <FormControl>
+                            <FormControl isInvalid={!!userError && userError.includes('メンバーシップ')}>
                               <FormLabel color={textColor} fontWeight="medium">メンバーシップ</FormLabel>
                               <Select
                                 value={userForm.membershipStatus}
@@ -826,9 +753,12 @@ const AdminDashboard = () => {
                                 <option value="paid">プレミアム会員</option>
                                 <option value="admin">管理者</option>
                               </Select>
+                              {userError && userError.includes('メンバーシップ') && (
+                                <Text fontSize="sm" color="red.500" mt={1}>{userError}</Text>
+                              )}
                             </FormControl>
                             
-                            <FormControl>
+                            <FormControl isInvalid={!!userError && userError.includes('電話番号')}>
                               <FormLabel color={textColor} fontWeight="medium">電話番号</FormLabel>
                               <InputGroup>
                                 <InputLeftElement>
@@ -840,9 +770,12 @@ const AdminDashboard = () => {
                                   placeholder="090-1234-5678"
                                 />
                               </InputGroup>
+                              {userError && userError.includes('電話番号') && (
+                                <Text fontSize="sm" color="red.500" mt={1}>{userError}</Text>
+                              )}
                             </FormControl>
                             
-                            <FormControl>
+                            <FormControl isInvalid={!!userError && userError.includes('住所')}>
                               <FormLabel color={textColor} fontWeight="medium">住所</FormLabel>
                               <InputGroup>
                                 <InputLeftElement>
@@ -854,9 +787,12 @@ const AdminDashboard = () => {
                                   placeholder="東京都渋谷区..."
                                 />
                               </InputGroup>
+                              {userError && userError.includes('住所') && (
+                                <Text fontSize="sm" color="red.500" mt={1}>{userError}</Text>
+                              )}
                             </FormControl>
                             
-                            <FormControl>
+                            <FormControl isInvalid={!!userError && userError.includes('パスワード')}>
                               <FormLabel color={textColor} fontWeight="medium">
                                 {editingUser ? '新しいパスワード（変更しない場合は空欄）' : 'パスワード'}
                               </FormLabel>
@@ -866,6 +802,9 @@ const AdminDashboard = () => {
                                 onChange={e => setUserForm({ ...userForm, password: e.target.value })}
                                 placeholder="パスワードを入力"
                               />
+                              {userError && userError.includes('パスワード') && (
+                                <Text fontSize="sm" color="red.500" mt={1}>{userError}</Text>
+                              )}
                             </FormControl>
                           </VStack>
                         </ModalBody>
@@ -1051,44 +990,41 @@ const AdminDashboard = () => {
                         </ModalHeader>
                         <ModalBody>
                           <VStack spacing={4}>
-                            <FormControl>
+                            <FormControl isInvalid={!!eventError && eventError.includes('イベント名')}>
                               <FormLabel color={textColor} fontWeight="medium">イベント名</FormLabel>
-                              <Input
-                                value={eventForm.name}
-                                onChange={e => setEventForm({ ...eventForm, name: e.target.value })}
-                                placeholder="イベント名を入力"
-                              />
+                              <InputGroup>
+                                <InputLeftElement>
+                                  <Icon as={FaCalendarAlt} color="gray.400" />
+                                </InputLeftElement>
+                                <Input
+                                  value={eventForm.name}
+                                  onChange={e => setEventForm({ ...eventForm, name: e.target.value })}
+                                  placeholder="イベント名を入力"
+                                />
+                              </InputGroup>
+                              {eventError && eventError.includes('イベント名') && (
+                                <Text fontSize="sm" color="red.500" mt={1}>{eventError}</Text>
+                              )}
                             </FormControl>
                             
-                            <FormControl>
-                              <FormLabel color={textColor} fontWeight="medium">説明</FormLabel>
-                              <Textarea
-                                value={eventForm.description}
-                                onChange={e => setEventForm({ ...eventForm, description: e.target.value })}
-                                placeholder="イベントの説明を入力"
-                                rows={3}
-                              />
-                            </FormControl>
-                            
-                            <FormControl>
+                            <FormControl isInvalid={!!eventError && eventError.includes('開催日')}>
                               <FormLabel color={textColor} fontWeight="medium">開催日</FormLabel>
-                              <Input
-                                type="date"
-                                value={eventForm.date}
-                                onChange={e => setEventForm({ ...eventForm, date: e.target.value })}
-                              />
+                              <InputGroup>
+                                <InputLeftElement>
+                                  <Icon as={FaCalendar} color="gray.400" />
+                                </InputLeftElement>
+                                <Input
+                                  type="date"
+                                  value={eventForm.date}
+                                  onChange={e => setEventForm({ ...eventForm, date: e.target.value })}
+                                />
+                              </InputGroup>
+                              {eventError && eventError.includes('開催日') && (
+                                <Text fontSize="sm" color="red.500" mt={1}>{eventError}</Text>
+                              )}
                             </FormControl>
                             
-                            <FormControl>
-                              <FormLabel color={textColor} fontWeight="medium">申込締切</FormLabel>
-                              <Input
-                                type="date"
-                                value={eventForm.applyDeadline}
-                                onChange={e => setEventForm({ ...eventForm, applyDeadline: e.target.value })}
-                              />
-                            </FormControl>
-                            
-                            <FormControl>
+                            <FormControl isInvalid={!!eventError && eventError.includes('場所')}>
                               <FormLabel color={textColor} fontWeight="medium">場所</FormLabel>
                               <InputGroup>
                                 <InputLeftElement>
@@ -1100,9 +1036,42 @@ const AdminDashboard = () => {
                                   placeholder="開催場所を入力"
                                 />
                               </InputGroup>
+                              {eventError && eventError.includes('場所') && (
+                                <Text fontSize="sm" color="red.500" mt={1}>{eventError}</Text>
+                              )}
                             </FormControl>
                             
-                            <FormControl>
+                            <FormControl isInvalid={!!eventError && eventError.includes('説明')}>
+                              <FormLabel color={textColor} fontWeight="medium">説明</FormLabel>
+                              <Textarea
+                                value={eventForm.description}
+                                onChange={e => setEventForm({ ...eventForm, description: e.target.value })}
+                                placeholder="イベントの説明を入力"
+                                rows={3}
+                              />
+                              {eventError && eventError.includes('説明') && (
+                                <Text fontSize="sm" color="red.500" mt={1}>{eventError}</Text>
+                              )}
+                            </FormControl>
+                            
+                            <FormControl isInvalid={!!eventError && eventError.includes('申込締切')}>
+                              <FormLabel color={textColor} fontWeight="medium">申込締切</FormLabel>
+                              <InputGroup>
+                                <InputLeftElement>
+                                  <Icon as={FaCalendarAlt} color="gray.400" />
+                                </InputLeftElement>
+                                <Input
+                                  type="date"
+                                  value={eventForm.applyDeadline}
+                                  onChange={e => setEventForm({ ...eventForm, applyDeadline: e.target.value })}
+                                />
+                              </InputGroup>
+                              {eventError && eventError.includes('申込締切') && (
+                                <Text fontSize="sm" color="red.500" mt={1}>{eventError}</Text>
+                              )}
+                            </FormControl>
+                            
+                            <FormControl isInvalid={!!eventError && eventError.includes('画像URL')}>
                               <FormLabel color={textColor} fontWeight="medium">画像URL</FormLabel>
                               <InputGroup>
                                 <InputLeftElement>
@@ -1111,9 +1080,12 @@ const AdminDashboard = () => {
                                 <Input
                                   value={eventForm.imageUrl}
                                   onChange={e => setEventForm({ ...eventForm, imageUrl: e.target.value })}
-                                  placeholder="画像URLを入力"
+                                  placeholder="画像URLを入力 (オプション)"
                                 />
                               </InputGroup>
+                              {eventError && eventError.includes('画像URL') && (
+                                <Text fontSize="sm" color="red.500" mt={1}>{eventError}</Text>
+                              )}
                             </FormControl>
                           </VStack>
                         </ModalBody>
@@ -1128,252 +1100,6 @@ const AdminDashboard = () => {
                             保存
                           </Button>
                           <Button ml={3} onClick={closeEventModal} leftIcon={<FaTimes />}>
-                            キャンセル
-                          </Button>
-                        </ModalFooter>
-                      </ModalContent>
-                    </Modal>
-                  </TabPanel>
-
-                  {/* Ads Tab */}
-                  <TabPanel>
-                    {loading ? (
-                      <VStack spacing={4} py={8}>
-                        <Spinner size="xl" color="purple.500" />
-                        <Text color={mutedTextColor}>データを読み込み中...</Text>
-                      </VStack>
-                    ) : error ? (
-                      <Alert 
-                        status="error" 
-                        mb={4}
-                        borderRadius="lg"
-                        variant="subtle"
-                        border="1px"
-                        borderColor="red.200"
-                      >
-                        <AlertIcon />
-                        <Box>
-                          <AlertTitle>エラーが発生しました</AlertTitle>
-                          <AlertDescription>{error}</AlertDescription>
-                        </Box>
-                      </Alert>
-                    ) : (
-                      <VStack spacing={6} align="stretch">
-                        <HStack justify="space-between">
-                          <Heading size="md" color={textColor}>広告一覧</Heading>
-                          <Button
-                            colorScheme="purple"
-                            size="sm"
-                            leftIcon={<FaPlus />}
-                            onClick={openCreateAdModal}
-                            _hover={{ transform: 'translateY(-1px)', boxShadow: 'md' }}
-                            transition="all 0.2s"
-                          >
-                            広告追加
-                          </Button>
-                        </HStack>
-                        
-                        <Box overflowX="auto">
-                          <Table variant="simple" size="sm" colorScheme="gray">
-                            <Thead>
-                              <Tr>
-                                <Th>ID</Th>
-                                <Th>タイトル</Th>
-                                <Th>内容</Th>
-                                <Th>開始日</Th>
-                                <Th>終了日</Th>
-                                <Th>操作</Th>
-                              </Tr>
-                            </Thead>
-                            <Tbody>
-                              {ads.map(ad => (
-                                <Tr key={ad.id} _hover={{ bg: 'gray.50' }}>
-                                  <Td>{ad.id}</Td>
-                                  <Td fontWeight="medium">{ad.title}</Td>
-                                  <Td maxW="200px" noOfLines={2}>{ad.content}</Td>
-                                  <Td>{ad.startDate?.slice(0, 10)}</Td>
-                                  <Td>{ad.endDate?.slice(0, 10)}</Td>
-                                  <Td>
-                                    <HStack spacing={2}>
-                                      <IconButton
-                                        size="sm"
-                                        colorScheme="blue"
-                                        icon={<FaEdit />}
-                                        onClick={() => openEditAdModal(ad)}
-                                        aria-label="編集"
-                                      />
-                                      <IconButton
-                                        size="sm"
-                                        colorScheme="red"
-                                        icon={<FaTrash />}
-                                        onClick={() => handleDeleteAd(ad.id)}
-                                        aria-label="削除"
-                                      />
-                                    </HStack>
-                                  </Td>
-                                </Tr>
-                              ))}
-                            </Tbody>
-                          </Table>
-                        </Box>
-                        
-                        {ads.length === 0 && (
-                          <VStack spacing={4} py={8}>
-                            <Icon as={FaAd} boxSize={12} color="gray.400" />
-                            <Text color={mutedTextColor}>広告が見つかりませんでした。</Text>
-                          </VStack>
-                        )}
-
-                        {/* Pagination */}
-                        {adTotalPages > 1 && (
-                          <VStack spacing={4} pt={6}>
-                            <HStack justify="space-between" w="full">
-                              <Text fontSize="sm" color={mutedTextColor}>
-                                表示中: {((adPage - 1) * itemsPerPage) + 1} - {Math.min(adPage * itemsPerPage, adTotalItems)} / {adTotalItems}件
-                              </Text>
-                              <HStack spacing={2}>
-                                <Text fontSize="sm" color={mutedTextColor}>表示件数:</Text>
-                                <Select
-                                  size="sm"
-                                  value={itemsPerPage}
-                                  onChange={(e) => handleItemsPerPageChange(parseInt(e.target.value))}
-                                  w="80px"
-                                >
-                                  <option value={5}>5</option>
-                                  <option value={10}>10</option>
-                                  <option value={20}>20</option>
-                                  <option value={50}>50</option>
-                                </Select>
-                              </HStack>
-                            </HStack>
-                            
-                            <ButtonGroup size="sm" isAttached variant="outline">
-                              <Button
-                                onClick={() => handlePageChange(adPage - 1, 'ads')}
-                                isDisabled={adPage === 1}
-                                leftIcon={<Icon as={FaArrowRight} transform="rotate(180deg)" />}
-                              >
-                                前へ
-                              </Button>
-                              
-                              {Array.from({ length: Math.min(5, adTotalPages) }, (_, i) => {
-                                const pageNum = Math.max(1, Math.min(adTotalPages - 4, adPage - 2)) + i;
-                                if (pageNum > adTotalPages) return null;
-                                
-                                return (
-                                  <Button
-                                    key={pageNum}
-                                    onClick={() => handlePageChange(pageNum, 'ads')}
-                                    colorScheme={pageNum === adPage ? 'blue' : 'gray'}
-                                    variant={pageNum === adPage ? 'solid' : 'outline'}
-                                  >
-                                    {pageNum}
-                                  </Button>
-                                );
-                              })}
-                              
-                              <Button
-                                onClick={() => handlePageChange(adPage + 1, 'ads')}
-                                isDisabled={adPage === adTotalPages}
-                                rightIcon={<Icon as={FaArrowRight} />}
-                              >
-                                次へ
-                              </Button>
-                            </ButtonGroup>
-                          </VStack>
-                        )}
-                      </VStack>
-                    )}
-
-                    {/* Ad Modal */}
-                    <Modal isOpen={isAdModalOpen} onClose={closeAdModal} size="lg">
-                      <ModalOverlay />
-                      <ModalContent>
-                        <ModalHeader>
-                          <HStack spacing={2}>
-                            <Icon as={editingAd ? FaEdit : FaPlus} color="purple.500" />
-                            <Text>{editingAd ? '広告編集' : '広告追加'}</Text>
-                          </HStack>
-                        </ModalHeader>
-                        <ModalBody>
-                          <VStack spacing={4}>
-                            <FormControl>
-                              <FormLabel color={textColor} fontWeight="medium">タイトル</FormLabel>
-                              <Input
-                                value={adForm.title}
-                                onChange={e => setAdForm({ ...adForm, title: e.target.value })}
-                                placeholder="広告タイトルを入力"
-                              />
-                            </FormControl>
-                            
-                            <FormControl>
-                              <FormLabel color={textColor} fontWeight="medium">内容</FormLabel>
-                              <Textarea
-                                value={adForm.content}
-                                onChange={e => setAdForm({ ...adForm, content: e.target.value })}
-                                placeholder="広告の内容を入力"
-                                rows={3}
-                              />
-                            </FormControl>
-                            
-                            <FormControl>
-                              <FormLabel color={textColor} fontWeight="medium">画像URL</FormLabel>
-                              <InputGroup>
-                                <InputLeftElement>
-                                  <Icon as={FaImage} color="gray.400" />
-                                </InputLeftElement>
-                                <Input
-                                  value={adForm.imageUrl}
-                                  onChange={e => setAdForm({ ...adForm, imageUrl: e.target.value })}
-                                  placeholder="画像URLを入力"
-                                />
-                              </InputGroup>
-                            </FormControl>
-                            
-                            <FormControl>
-                              <FormLabel color={textColor} fontWeight="medium">リンク</FormLabel>
-                              <InputGroup>
-                                <InputLeftElement>
-                                  <Icon as={FaLink} color="gray.400" />
-                                </InputLeftElement>
-                                <Input
-                                  value={adForm.link}
-                                  onChange={e => setAdForm({ ...adForm, link: e.target.value })}
-                                  placeholder="リンクURLを入力"
-                                />
-                              </InputGroup>
-                            </FormControl>
-                            
-                            <FormControl>
-                              <FormLabel color={textColor} fontWeight="medium">開始日</FormLabel>
-                              <Input
-                                type="date"
-                                value={adForm.startDate}
-                                onChange={e => setAdForm({ ...adForm, startDate: e.target.value })}
-                              />
-                            </FormControl>
-                            
-                            <FormControl>
-                              <FormLabel color={textColor} fontWeight="medium">終了日</FormLabel>
-                              <Input
-                                type="date"
-                                value={adForm.endDate}
-                                onChange={e => setAdForm({ ...adForm, endDate: e.target.value })}
-                              />
-                            </FormControl>
-                          </VStack>
-                        </ModalBody>
-                        {adError && (
-                          <Alert status="error" mx={6} mb={4} borderRadius="md">
-                            <AlertIcon />
-                            {adError}
-                          </Alert>
-                        )}
-                        <ModalFooter>
-                          <Button colorScheme="purple" onClick={handleSaveAd} leftIcon={<FaSave />}>
-                            保存
-                          </Button>
-                          <Button ml={3} onClick={closeAdModal} leftIcon={<FaTimes />}>
                             キャンセル
                           </Button>
                         </ModalFooter>

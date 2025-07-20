@@ -1,10 +1,10 @@
 const User = require('../models').User;
 const Event = require('../models').Event;
-const Ad = require('../models').Ad;
 const EventApplication = require('../models').EventApplication;
 const Favorite = require('../models').Favorite;
 const bcrypt = require('bcrypt');
 const dotenv = require('dotenv');
+const Joi = require('joi');
 dotenv.config();
 
 // USERS
@@ -42,9 +42,17 @@ exports.getUser = async (req, res) => {
 };
 
 exports.createUser = async (req, res) => {
-  const { username, email, membershipStatus, phone, address, password } = req.body;
-  if (!username || !email || !password) {
-    return res.status(400).json({ message: 'Username, email, and password are required.' });
+  const userSchema = Joi.object({
+    username: Joi.string().min(2).max(20).required(),
+    email: Joi.string().email().required(),
+    password: Joi.string().min(8).max(30).required(),
+    membershipStatus: Joi.string().valid('free', 'paid', 'admin').optional(),
+    phone: Joi.string().min(10).max(15).optional(),
+    address: Joi.string().min(3).max(100).optional()
+  });
+  const { error } = userSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
   }
   try {
     // Check for duplicate email or username
@@ -67,6 +75,19 @@ exports.createUser = async (req, res) => {
 };
 
 exports.updateUser = async (req, res) => {
+  const userSchema = Joi.object({
+    id: Joi.number().required(),
+    username: Joi.string().min(2).max(20).optional(),
+    email: Joi.string().email().optional(),
+    password: Joi.string().min(8).max(30).optional(),
+    membershipStatus: Joi.string().valid('free', 'paid', 'admin').optional(),
+    phone: Joi.string().min(10).max(15).optional(),
+    address: Joi.string().min(3).max(100).optional()
+  });
+  const { error } = userSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
+  }
   const user = await User.findByPk(req.body.id);
   if (!user) return res.status(404).json({ message: 'User not found.' });
   const { username, email, isAdmin, membershipStatus } = req.body;
@@ -121,9 +142,17 @@ exports.listEvents = async (req, res) => {
 };
 
 exports.createEvent = async (req, res) => {
-  const { name, description, date, applyDeadline, location, imageUrl } = req.body;
-  if (!name || !date) {
-    return res.status(400).json({ message: 'Event name and date are required.' });
+  const eventSchema = Joi.object({
+    name: Joi.string().min(2).max(100).required(),
+    description: Joi.string().max(1000).optional(),
+    date: Joi.date().required(),
+    applyDeadline: Joi.date().required(),
+    location: Joi.string().min(2).max(100).required(),
+    imageUrl: Joi.string().uri().optional().allow('')
+  });
+  const { error } = eventSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
   }
   try {
     const event = await Event.create({ name, description, date, applyDeadline, location, imageUrl });
@@ -134,6 +163,19 @@ exports.createEvent = async (req, res) => {
 };
 
 exports.updateEvent = async (req, res) => {
+  const eventSchema = Joi.object({
+    id: Joi.number().required(),
+    name: Joi.string().min(2).max(100).optional(),
+    description: Joi.string().max(1000).optional(),
+    date: Joi.date().optional(),
+    applyDeadline: Joi.date().optional(),
+    location: Joi.string().min(2).max(100).optional(),
+    imageUrl: Joi.string().uri().optional().allow('')
+  });
+  const { error } = eventSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
+  }
   const event = await Event.findByPk(req.body.id);
   if (!event) return res.status(404).json({ message: 'Event not found.' });
   const { name, description, date, location, imageUrl } = req.body;
@@ -147,61 +189,6 @@ exports.deleteEvent = async (req, res) => {
   await event.destroy();
   res.json({ message: 'Event deleted.' });
 };
-
-// ADS
-exports.listAds = async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const offset = (page - 1) * limit;
-    
-    const { count, rows: ads } = await Ad.findAndCountAll({
-      limit,
-      offset,
-      order: [['createdAt', 'DESC']]
-    });
-    
-    const totalPages = Math.ceil(count / limit);
-    
-    res.json({
-      data: ads,
-      totalItems: count,
-      totalPages,
-      currentPage: page,
-      itemsPerPage: limit
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message || 'Failed to fetch ads.' });
-  }
-};
-
-exports.createAd = async (req, res) => {
-  const { title, imageUrl, link, content, startDate, endDate } = req.body;
-  if (!title) {
-    return res.status(400).json({ message: 'Ad title is required.' });
-  }
-  try {
-    const ad = await Ad.create({ title, content, imageUrl, link, startDate, endDate });
-    res.status(201).json(ad);
-  } catch (error) {
-    res.status(500).json({ message: error.message || 'Failed to create ad.' });
-  }
-};
-
-exports.updateAd = async (req, res) => {
-  const ad = await Ad.findByPk(req.body.id);
-  if (!ad) return res.status(404).json({ message: 'Ad not found.' });
-  const { title, imageUrl, link, startDate, endDate } = req.body;
-  await ad.update({ title, imageUrl, link, startDate, endDate });
-  res.json(ad);
-};
-
-exports.deleteAd = async (req, res) => {
-  const ad = await Ad.findByPk(req.body.id);
-  if (!ad) return res.status(404).json({ message: 'Ad not found.' });
-  await ad.destroy();
-  res.json({ message: 'Ad deleted.' });
-}; 
 
 // Get all cities grouped by region
 exports.getCitiesGroupedByRegion = async (req, res) => {

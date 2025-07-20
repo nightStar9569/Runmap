@@ -52,6 +52,7 @@ import {
   FaArrowRight,
   FaStar
 } from 'react-icons/fa';
+import { motion } from 'framer-motion';
 
 export default function Register() {
   const [username, setUsername] = useState('');
@@ -82,12 +83,13 @@ export default function Register() {
 
   const validate = () => {
     if (!username) return 'ユーザー名が必要です';
-    if (username.length < 3) return 'ユーザー名は3文字以上で入力してください';
+    if (username.length < 2 || username.length > 20) return 'ユーザー名は2〜20文字で入力してください';
     if (!email) return 'メールアドレスが必要です';
-    if (!/\S+@\S+\.\S+/.test(email)) return '有効なメールアドレスを入力してください';
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return '有効なメールアドレスを入力してください';
     if (!password) return 'パスワードが必要です';
-    if (password.length < 8) return 'パスワードは8文字以上で入力してください';
-    if (phone && !/^\+?\d{7,15}$/.test(phone)) return '有効な電話番号を入力してください';
+    if (password.length < 8 || password.length > 30) return 'パスワードは8〜30文字で入力してください';
+    if (phone && !/^\d{10,15}$/.test(phone)) return '電話番号は10〜15桁の数字で入力してください';
+    if (address && (address.length < 3 || address.length > 100)) return '住所は3〜100文字で入力してください';
     return '';
   };
 
@@ -121,55 +123,18 @@ export default function Register() {
   };
 
   return (
-    <Box minH="100vh" bg={bgColor} py={{ base: 4, md: 8 }}>
-      <Container maxW="container.lg">
-        <VStack spacing={8}>
-          {/* Header Section */}
-          <VStack spacing={4} textAlign="center" maxW="2xl">
-            <Flex align="center" gap={3}>
-              <Box position="relative">
-                <Image 
-                  src="/image/_1.png" 
-                  alt="RunMap Logo" 
-                  boxSize={{ base: "48px", md: "64px" }} 
-                  borderRadius="full"
-                  border="3px"
-                  borderColor="blue.500"
-                />
-                <Badge 
-                  position="absolute" 
-                  top="-2" 
-                  right="-2" 
-                  colorScheme="green" 
-                  variant="solid" 
-                  size="sm"
-                  borderRadius="full"
-                >
-                  <Icon as={FaRunning} boxSize={2} />
-                </Badge>
-              </Box>
-              <VStack align="start" spacing={0}>
-                <Heading size={{ base: "lg", md: "xl" }} color="blue.600" fontWeight="bold">
-                  RunMap
-                </Heading>
-                <Text fontSize={{ base: "sm", md: "md" }} color={mutedTextColor} fontWeight="medium">
-                  マラソン大会検索サイト
-                </Text>
-              </VStack>
-            </Flex>
-            <Text fontSize={{ base: "lg", md: "xl" }} color={textColor} fontWeight="medium">
-              新規アカウント作成
-            </Text>
-            <Text color={mutedTextColor} maxW="md">
-              RunMapのアカウントを作成して、マラソン大会の検索やお気に入り機能を利用しましょう
-            </Text>
-          </VStack>
-
-          {/* Registration Form */}
-          <Card 
-            bg={cardBg} 
-            shadow="xl" 
-            border="1px" 
+    <Box minH="100vh" bg={bgColor} py={10}>
+      <Container maxW="lg" centerContent>
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, type: 'spring' }}
+          style={{ width: '100%' }}
+        >
+          <Card
+            bg={cardBg}
+            shadow="2xl"
+            border="1px"
             borderColor={borderColor}
             w="full"
             maxW="2xl"
@@ -178,12 +143,13 @@ export default function Register() {
           >
             <CardHeader pb={4}>
               <VStack spacing={3}>
-                <Icon as={FaUserPlus} boxSize={8} color="blue.500" />
-                <Heading size="md" color={textColor}>アカウント情報</Heading>
-                <Text fontSize="sm" color={mutedTextColor} textAlign="center">
-                  以下の情報を入力してアカウントを作成してください
+                <Icon as={FaUserPlus} boxSize={10} color="blue.500" />
+                <Heading size="lg" color={textColor} fontWeight="bold" textAlign="center">
+                  新規登録
+                </Heading>
+                <Text fontSize="md" color={mutedTextColor} textAlign="center">
+                  必要な情報を入力してアカウントを作成してください
                 </Text>
-                
                 {/* Progress Bar */}
                 <VStack spacing={2} w="full">
                   <HStack justify="space-between" w="full">
@@ -202,8 +168,19 @@ export default function Register() {
                 </VStack>
               </VStack>
             </CardHeader>
-            
             <CardBody pt={0}>
+              {error && (
+                <Alert status="error" mb={4} borderRadius="md">
+                  <AlertIcon />
+                  {error}
+                </Alert>
+              )}
+              {success && (
+                <Alert status="success" mb={4} borderRadius="md">
+                  <AlertIcon />
+                  {success}
+                </Alert>
+              )}
               <form onSubmit={handleSubmit} autoComplete="on">
                 <VStack spacing={6}>
                   <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={6} w="full">
@@ -225,9 +202,10 @@ export default function Register() {
                             size="lg"
                             bg="white"
                             borderColor={borderColor}
+                            borderRadius="xl"
                             _focus={{ 
                               borderColor: 'blue.500', 
-                              boxShadow: '0 0 0 1px #3182ce',
+                              boxShadow: '0 0 0 2px #3182ce',
                               bg: 'white'
                             }}
                             _hover={{ borderColor: 'blue.300' }}
@@ -236,7 +214,6 @@ export default function Register() {
                         </InputGroup>
                       </FormControl>
                     </GridItem>
-
                     <GridItem>
                       <FormControl isRequired>
                         <FormLabel color={textColor} fontWeight="medium">
@@ -254,9 +231,10 @@ export default function Register() {
                             size="lg"
                             bg="white"
                             borderColor={borderColor}
+                            borderRadius="xl"
                             _focus={{ 
                               borderColor: 'blue.500', 
-                              boxShadow: '0 0 0 1px #3182ce',
+                              boxShadow: '0 0 0 2px #3182ce',
                               bg: 'white'
                             }}
                             _hover={{ borderColor: 'blue.300' }}
@@ -265,7 +243,6 @@ export default function Register() {
                       </FormControl>
                     </GridItem>
                   </Grid>
-
                   <FormControl isRequired>
                     <FormLabel color={textColor} fontWeight="medium">
                       パスワード
@@ -278,13 +255,14 @@ export default function Register() {
                         type={showPassword ? 'text' : 'password'}
                         value={password}
                         onChange={e => setPassword(e.target.value)}
-                        placeholder="8文字以上で入力"
+                        placeholder="8〜30文字で入力"
                         size="lg"
                         bg="white"
                         borderColor={borderColor}
+                        borderRadius="xl"
                         _focus={{ 
                           borderColor: 'blue.500', 
-                          boxShadow: '0 0 0 1px #3182ce',
+                          boxShadow: '0 0 0 2px #3182ce',
                           bg: 'white'
                         }}
                         _hover={{ borderColor: 'blue.300' }}
@@ -303,11 +281,10 @@ export default function Register() {
                         </Tooltip>
                       </InputRightElement>
                     </InputGroup>
-                    <Text fontSize="xs" color={mutedTextColor} mt={1}>
-                      パスワードは8文字以上で、英数字を含めてください
+                    <Text fontSize="sm" color={mutedTextColor} mt={1}>
+                      パスワードは8〜30文字で、英数字を含めてください
                     </Text>
                   </FormControl>
-
                   <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={6} w="full">
                     <GridItem>
                       <FormControl>
@@ -322,13 +299,14 @@ export default function Register() {
                             type="tel"
                             value={phone}
                             onChange={e => setPhone(e.target.value)}
-                            placeholder="090-1234-5678"
+                            placeholder="09012345678"
                             size="lg"
                             bg="white"
                             borderColor={borderColor}
+                            borderRadius="xl"
                             _focus={{ 
                               borderColor: 'blue.500', 
-                              boxShadow: '0 0 0 1px #3182ce',
+                              boxShadow: '0 0 0 2px #3182ce',
                               bg: 'white'
                             }}
                             _hover={{ borderColor: 'blue.300' }}
@@ -336,7 +314,6 @@ export default function Register() {
                         </InputGroup>
                       </FormControl>
                     </GridItem>
-
                     <GridItem>
                       <FormControl>
                         <FormLabel color={textColor} fontWeight="medium">
@@ -354,9 +331,10 @@ export default function Register() {
                             size="lg"
                             bg="white"
                             borderColor={borderColor}
+                            borderRadius="xl"
                             _focus={{ 
                               borderColor: 'blue.500', 
-                              boxShadow: '0 0 0 1px #3182ce',
+                              boxShadow: '0 0 0 2px #3182ce',
                               bg: 'white'
                             }}
                             _hover={{ borderColor: 'blue.300' }}
@@ -365,159 +343,39 @@ export default function Register() {
                       </FormControl>
                     </GridItem>
                   </Grid>
-
-                  {error && (
-                    <Alert 
-                      status="error" 
-                      borderRadius="lg"
-                      variant="subtle"
-                      border="1px"
-                      borderColor="red.200"
-                    >
-                      <AlertIcon />
-                      <Box>
-                        <Text fontWeight="medium">登録エラー</Text>
-                        <Text fontSize="sm">{error}</Text>
-                      </Box>
-                    </Alert>
-                  )}
-
-                  {success && (
-                    <Alert 
-                      status="success" 
-                      borderRadius="lg"
-                      variant="subtle"
-                      border="1px"
-                      borderColor="green.200"
-                    >
-                      <AlertIcon />
-                      <Box>
-                        <Text fontWeight="medium">登録成功</Text>
-                        <Text fontSize="sm">{success}</Text>
-                      </Box>
-                    </Alert>
-                  )}
-
                   <Button
-                    colorScheme="blue"
                     type="submit"
+                    colorScheme="blue"
                     size="lg"
                     w="full"
                     isLoading={loading}
                     loadingText="登録中..."
-                    leftIcon={loading ? <Spinner size="sm" /> : <FaUserPlus />}
-                    rightIcon={!loading && <FaArrowRight />}
-                    _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
+                    leftIcon={<FaUserPlus />}
+                    rightIcon={<FaArrowRight />}
+                    borderRadius="full"
+                    fontSize="xl"
+                    shadow="md"
+                    as={motion.button}
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.98 }}
+                    _hover={{ bg: 'blue.600', shadow: 'xl' }}
                     transition="all 0.2s"
                   >
-                    アカウントを作成
+                    新規登録
                   </Button>
+                  <HStack justify="center" w="full">
+                    <Text color={mutedTextColor} fontSize="md">すでにアカウントをお持ちですか？</Text>
+                    <NextLink href="/login" passHref legacyBehavior>
+                      <Button as="a" variant="link" colorScheme="blue" fontWeight="bold" fontSize="md">
+                        ログイン
+                      </Button>
+                    </NextLink>
+                  </HStack>
                 </VStack>
               </form>
             </CardBody>
           </Card>
-
-          {/* Login Link */}
-          <Card 
-            bg={cardBg} 
-            shadow="md" 
-            border="1px" 
-            borderColor={borderColor}
-            w="full"
-            maxW="2xl"
-          >
-            <CardBody textAlign="center">
-              <VStack spacing={3}>
-                <Text color={mutedTextColor}>
-                  すでにアカウントをお持ちの方は
-                </Text>
-                <Button
-                  as={NextLink}
-                  href="/login"
-                  colorScheme="teal"
-                  variant="outline"
-                  size="lg"
-                  w="full"
-                  leftIcon={<FaUser />}
-                  _hover={{ transform: 'translateY(-1px)', boxShadow: 'md' }}
-                  transition="all 0.2s"
-                >
-                  ログイン
-                </Button>
-              </VStack>
-            </CardBody>
-          </Card>
-
-          {/* Benefits Section */}
-          <VStack spacing={6} maxW="4xl" w="full">
-            <Heading size="md" color={textColor} textAlign="center">
-              アカウント作成のメリット
-            </Heading>
-            
-            <Grid 
-              templateColumns={{ base: "1fr", md: "repeat(3, 1fr)" }} 
-              gap={6} 
-              w="full"
-            >
-              <Card 
-                bg={cardBg} 
-                shadow="md" 
-                border="1px" 
-                borderColor={borderColor}
-                p={6}
-                textAlign="center"
-                _hover={{ transform: 'translateY(-4px)', shadow: 'lg' }}
-                transition="all 0.3s ease"
-              >
-                <VStack spacing={4}>
-                  <Icon as={FaStar} boxSize={8} color="yellow.500" />
-                  <Text fontWeight="bold" color={textColor}>お気に入り機能</Text>
-                  <Text fontSize="sm" color={mutedTextColor}>
-                    気になるマラソン大会をお気に入りに登録して、いつでも確認できます
-                  </Text>
-                </VStack>
-              </Card>
-
-              <Card 
-                bg={cardBg} 
-                shadow="md" 
-                border="1px" 
-                borderColor={borderColor}
-                p={6}
-                textAlign="center"
-                _hover={{ transform: 'translateY(-4px)', shadow: 'lg' }}
-                transition="all 0.3s ease"
-              >
-                <VStack spacing={4}>
-                  <Icon as={FaCheckCircle} boxSize={8} color="green.500" />
-                  <Text fontWeight="bold" color={textColor}>申込管理</Text>
-                  <Text fontSize="sm" color={mutedTextColor}>
-                    申し込んだ大会を管理し、申込状況を簡単に確認できます
-                  </Text>
-                </VStack>
-              </Card>
-
-              <Card 
-                bg={cardBg} 
-                shadow="md" 
-                border="1px" 
-                borderColor={borderColor}
-                p={6}
-                textAlign="center"
-                _hover={{ transform: 'translateY(-4px)', shadow: 'lg' }}
-                transition="all 0.3s ease"
-              >
-                <VStack spacing={4}>
-                  <Icon as={FaShieldAlt} boxSize={8} color="blue.500" />
-                  <Text fontWeight="bold" color={textColor}>セキュリティ</Text>
-                  <Text fontSize="sm" color={mutedTextColor}>
-                    安全なアカウント管理で、あなたの情報を保護します
-                  </Text>
-                </VStack>
-              </Card>
-            </Grid>
-          </VStack>
-        </VStack>
+        </motion.div>
       </Container>
     </Box>
   );

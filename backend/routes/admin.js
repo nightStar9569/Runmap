@@ -17,12 +17,6 @@ router.post('/events/create', auth, admin, adminController.createEvent);
 router.post('/events/update', auth, admin, adminController.updateEvent);
 router.post('/events/delete', auth, admin, adminController.deleteEvent);
 
-// ADS
-router.get('/ads', auth, admin, adminController.listAds);
-router.post('/ads/create', auth, admin, adminController.createAd);
-router.post('/ads/update', auth, admin, adminController.updateAd);
-router.post('/ads/delete', auth, admin, adminController.deleteAd);
-
 // Public route for cities
 router.get('/cities-grouped', adminController.getCitiesGroupedByRegion);
 // router.post('/send-daily-reminders', adminController.sendDailyReminders);
