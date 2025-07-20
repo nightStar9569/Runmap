@@ -25,5 +25,6 @@ router.post('/ads/delete', auth, admin, adminController.deleteAd);
 
 // Public route for cities
 router.get('/cities-grouped', adminController.getCitiesGroupedByRegion);
+// router.post('/send-daily-reminders', adminController.sendDailyReminders);
 
 module.exports = router; 

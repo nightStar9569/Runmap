@@ -226,10 +226,10 @@ exports.getPricing = async (req, res) => {
         price: 330, // 330 JPY
         currency: 'jpy',
         features: [
-          'Email notifications for event reminders',
-          'Priority support',
-          'Advanced event filtering',
-          'Unlimited favorites'
+          'イベントリマインダーのメール通知',
+          '優先サポート',
+          '高度なイベント絞り込み機能',
+          'お気に入り登録数無制限'
         ],
         duration:'yearly'
       }

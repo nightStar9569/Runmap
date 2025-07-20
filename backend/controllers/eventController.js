@@ -248,18 +248,42 @@ exports.updateApplicationStatus = async (req, res) => {
 // Get events by city and date range
 exports.getEventsByCityAndDate = async (req, res) => {
   try {
-    const { cityId } = req.query;
+    const { cityId, page = 1, limit = 20, name, location, startDate, endDate } = req.query;
     const whereClause = {};
     if (cityId) {
       whereClause.cityId = cityId;
     }
-    console.log(whereClause);
-    const events = await Event.findAll({
+    if (name) {
+      whereClause.name = { [Op.like]: `%${name}%` };
+    }
+    if (location) {
+      whereClause.location = { [Op.like]: `%${location}%` };
+    }
+    if (startDate && endDate) {
+      whereClause.date = { [Op.between]: [startDate, endDate] };
+    } else if (startDate) {
+      whereClause.date = { [Op.gte]: startDate };
+    } else if (endDate) {
+      whereClause.date = { [Op.lte]: endDate };
+    }
+    // Add race type filters if present
+    [
+      'fiveKm', 'tenKm', 'half', 'full', 'ultra', 'elementary', 'parent', 'timed', 'relay', 'trail'
+    ].forEach(type => {
+      if (req.query[type]) {
+        whereClause[type] = true;
+      }
+    });
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const { count, rows: events } = await Event.findAndCountAll({
       where: whereClause,
       include: [{ model: require('../models').City }],
-      order: [['date', 'ASC']]
+      order: [['date', 'ASC']],
+      limit: parseInt(limit),
+      offset,
     });
-    res.json(events);
+    const totalPages = Math.ceil(count / limit);
+    res.json({ events, totalPages, currentPage: parseInt(page), totalEvents: count });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

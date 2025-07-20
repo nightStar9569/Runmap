@@ -61,7 +61,7 @@ import {
 import api from '../utils/api';
 
 // Stripeの読み込み（公開キーに置き換えてください）
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_51RjxW74Nxj4bqqLClaa7S6IYrq44bN5BXWHxlPnrDZrDpMa6Xh3PILPvy1UtmR5IM61V6NfTxPF02IEaeMM40CKJ00GgSYsd9Yprod_SfMRccDD1QlpiD');
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 // 決済フォームコンポーネント
 function PaymentForm({ pricing, onSuccess }) {

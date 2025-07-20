@@ -4,6 +4,8 @@ const Ad = require('../models').Ad;
 const EventApplication = require('../models').EventApplication;
 const Favorite = require('../models').Favorite;
 const bcrypt = require('bcrypt');
+const dotenv = require('dotenv');
+dotenv.config();
 
 // USERS
 exports.listUsers = async (req, res) => {
@@ -216,3 +218,83 @@ exports.getCitiesGroupedByRegion = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 }; 
+
+// exports.sendDailyReminders = async (req, res) => {
+//   // Security: check secret token
+//   if (req.headers['x-reminder-secret'] !== process.env.REMINDER_SECRET) {
+//     return res.status(403).json({ message: 'Forbidden' });
+//   }
+//   try {
+//     const { Op } = require('sequelize');
+//     const Event = require('../models').Event;
+//     const EventApplication = require('../models').EventApplication;
+//     const User = require('../models').User;
+//     const Notification = require('../models').Notification;
+//     const emailJs = require('@emailjs/browser');
+//     emailJs.init(process.env.EMAILJS_SERVICE_ID, process.env.EMAILJS_USER_ID);
+//     const now = new Date();
+//     const oneDayAhead = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);
+//     const sevenDaysAhead = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+//     const oneDayAheadStr = oneDayAhead.toISOString().slice(0, 10);
+//     const sevenDaysAheadStr = sevenDaysAhead.toISOString().slice(0, 10);
+//     const events = await Event.findAll({
+//       where: {
+//         date: {
+//           [Op.or]: [oneDayAheadStr, sevenDaysAheadStr]
+//         }
+//       }
+//     });
+//     let totalReminders = 0;
+//     for (const event of events) {
+//       const eventDate = new Date(event.date);
+//       const daysUntil = Math.round((eventDate - now) / (24 * 60 * 60 * 1000));
+//       const applications = await EventApplication.findAll({
+//         where: { eventId: event.id, status: 'approved' },
+//         include: [
+//           { model: User, as: 'user', where: { notificationEnabled: true } }
+//         ]
+//       });
+//       for (const application of applications) {
+//         const user = application.user;
+//         let subject, message;
+//         if (daysUntil === 7) {
+//           subject = `【RunMap】イベントリマインダー: ${event.name} - 1週間前`;
+//           message = `${user.username} 様\n\n${event.name} が1週間後に開催されます。\n\n【イベント詳細】\n・イベント名: ${event.name}\n・開催日: ${event.date}\n・開催場所: ${event.location}\n・申込締切: ${event.applyDeadline}\n\n準備を忘れずにお願いします！\n\nRunMap`;
+//         } else if (daysUntil === 1) {
+//           subject = `【RunMap】イベントリマインダー: ${event.name} - 明日開催`;
+//           message = `${user.username} 様\n\n${event.name} が明日開催されます！\n\n【イベント詳細】\n・イベント名: ${event.name}\n・開催日: ${event.date}\n・開催場所: ${event.location}\n\n当日の準備をお忘れなく！\n\nRunMap`;
+//         } else {
+//           continue;
+//         }
+//         try {
+//           const templateParams = {
+//             to_name: user.username,
+//             to_email: user.email,
+//             from_name: 'RunMap Admin',
+//             from_email: 'yoshinotakashi69@gmail.com',
+//             reply_to: 'yoshinotakashi69@gmail.com',
+//             subject: subject,
+//             message: message,
+//           };
+//           await emailJs.send(
+//             process.env.EMAILJS_SERVICE_ID,
+//             process.env.EMAILJS_TEMPLATE_ID,
+//             templateParams,
+//             process.env.EMAILJS_USER_ID
+//           );
+//           await Notification.create({
+//             userId: user.id,
+//             message: `${event.name}のリマインダー: ${daysUntil === 7 ? '1週間前' : '明日開催'}`,
+//             isRead: false
+//           });
+//           totalReminders++;
+//         } catch (error) {
+//           console.error(`Failed to send reminder to ${user.email}:`, error.message);
+//         }
+//       }
+//     }
+//     res.json({ message: `Reminders sent! (${totalReminders})` });
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// }; 

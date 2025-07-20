@@ -5,11 +5,14 @@ const EventApplication = require('../models').EventApplication;
 const User = require('../models').User;
 const Notification = require('../models').Notification;
 const emailJs = require('@emailjs/browser');
+const dotenv = require('dotenv');
+dotenv.config();
 
-emailJs.init("service_nrbawlr", "UJbadQ1ntBhBEuWca");
+emailJs.init(process.env.EMAILJS_SERVICE_ID, process.env.EMAILJS_USER_ID);
 // Send reminder emails to users who applied for events
 // Runs every day at 9:00 AM
-cron.schedule('*/2 * * * *', async () => {
+
+cron.schedule('* 9 * * * *', async () => {  // 9:00 AM  
   console.log('Running event application reminder cron job...');
   
   try {
@@ -65,35 +68,35 @@ cron.schedule('*/2 * * * *', async () => {
         if (daysUntil === 7) {
           subject = `【RunMap】イベントリマインダー: ${event.name} - 1週間前`;
           message = `
-${user.username} 様
+          ${user.username} 様
 
-${event.name} が1週間後に開催されます。
+          ${event.name} が1週間後に開催されます。
 
-【イベント詳細】
-・イベント名: ${event.name}
-・開催日: ${event.date}
-・開催場所: ${event.location}
-・申込締切: ${event.applyDeadline}
+          【イベント詳細】
+          ・イベント名: ${event.name}
+          ・開催日: ${event.date}
+          ・開催場所: ${event.location}
+          ・申込締切: ${event.applyDeadline}
 
-準備を忘れずにお願いします！
+          準備を忘れずにお願いします！
 
-RunMap
+          RunMap
           `.trim();
         } else if (daysUntil === 1) {
           subject = `【RunMap】イベントリマインダー: ${event.name} - 明日開催`;
           message = `
-${user.username} 様
+          ${user.username} 様
 
-${event.name} が明日開催されます！
+          ${event.name} が明日開催されます！
 
-【イベント詳細】
-・イベント名: ${event.name}
-・開催日: ${event.date}
-・開催場所: ${event.location}
+          【イベント詳細】
+          ・イベント名: ${event.name}
+          ・開催日: ${event.date}
+          ・開催場所: ${event.location}
 
-当日の準備をお忘れなく！
+          当日の準備をお忘れなく！
 
-RunMap
+          RunMap
           `.trim();
         } else {
           continue; // Skip if not exactly 1 or 7 days
@@ -103,19 +106,19 @@ RunMap
           const templateParams = {
             // to_name: user.username,
             to_name: 'a',
-            to_email: 'kenjisatodev92@gmail.com',
+            to_email: 'mori.sunrise9546@gmail.com',
             from_name: 'RunMap Admin',
-            from_email: 'zumado.jp0527@gmail.com',
-            reply_to: 'zumado.jp0527@gmail.com',
-            phone: subject,
+            from_email: 'yoshinotakashi69@gmail.com',
+            reply_to: 'yoshinotakashi69@gmail.com',
+            subject: subject,
             message: message,
           };
           // Send email
           await emailJs.send(
-            "service_nrbawlr",
-            "template_cvq0atc",
+            process.env.EMAILJS_SERVICE_ID,
+            process.env.EMAILJS_TEMPLATE_ID,
             templateParams,
-            "UJbadQ1ntBhBEuWca"
+            process.env.EMAILJS_USER_ID
           );
           
           // Create notification

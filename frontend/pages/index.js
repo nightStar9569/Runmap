@@ -36,7 +36,7 @@ import {
   AlertTitle,
   AlertDescription,
   Skeleton,
-  Img,
+  Image,
 } from "@chakra-ui/react";
 import Link from "next/link";
 import {
@@ -63,6 +63,7 @@ import {
 import { useRouter } from "next/router";
 
 import NextImage from "next/image";
+import { motion } from 'framer-motion';
 
 export default function Home() {
   const [cities, setCities] = useState({});
@@ -143,15 +144,33 @@ export default function Home() {
 
   return (
     <div>
-      <Box display="flex" justifyContent="center" mb={4}>
-        <img
+      <Box
+        position="relative"
+        width="100%"
+        maxW="1900px"
+        height="50%"
+        mx="auto"
+        mb={8}
+        borderRadius="lg"
+        overflow="hidden"
+        boxShadow="md"
+        aspectRatio={{ md: '5/1' }} // Chakra UI v2+ supports aspectRatio
+        minH={{ base: '200px', md: '320px' }}
+        bg="gray.100"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+      >
+        <NextImage
           src="/image/_1.png"
           alt="Banner Logo"
-          layout="responsive"
-          width={'1900vw'}
+          layout="fill"
+          objectFit="cover"
+          priority
+          quality={90}
         />
       </Box>
-      <Box maxW="900px" mx="auto" mt={10}>
+      <Box maxW="900px" mx="auto" mt={10} mb={20}>
         <Heading as="h2" size="lg" mb={6} textAlign={'center'}>
           都道府県別検索
         </Heading>
@@ -168,7 +187,7 @@ export default function Home() {
           <Text color="red.500">{error}</Text>
         ) : (
           <VStack align="start" spacing={6} w="100%">
-            {Object.keys(cities).map((region) => (
+            {Object.keys(cities).map((region, regionIdx) => (
               <Box key={region} w="100%">
                 <Text fontWeight="bold" mb={1}>
                   {region}
@@ -177,26 +196,14 @@ export default function Home() {
                   columns={{ base: 2, sm: 3, md: 4, lg: 6 }}
                   spacing={4}
                 >
-                  {cities[region].map((city) =>
-                    city.name === "千葉" ? (
+                  {cities[region].map((city, cityIdx) => (
+                    <motion.div
+                      key={city.id}
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.05 * cityIdx, duration: 0.5, type: 'spring' }}
+                    >
                       <Link
-                        key={city.id}
-                        href={{
-                          pathname: "/events",
-                          query: { cityId: 12, cityName: "千葉" },
-                        }}
-                        passHref
-                      >
-                        <ChakraLink
-                          color="blue.600"
-                          _hover={{ textDecoration: "underline" }}
-                        >
-                          {city.name}
-                        </ChakraLink>
-                      </Link>
-                    ) : (
-                      <Link
-                        key={city.id}
                         href={{
                           pathname: "/events",
                           query: { cityId: city.id, cityName: city.name },
@@ -204,14 +211,27 @@ export default function Home() {
                         passHref
                       >
                         <ChakraLink
+                          display="block"
+                          p={4}
+                          borderRadius="lg"
+                          boxShadow="md"
+                          bg="white"
+                          fontWeight="bold"
+                          textAlign="center"
                           color="blue.600"
-                          _hover={{ textDecoration: "underline" }}
+                          _hover={{
+                            textDecoration: "none",
+                            bg: "blue.50",
+                            boxShadow: "xl",
+                            transform: "scale(1.05)",
+                          }}
+                          transition="all 0.2s"
                         >
                           {city.name}
                         </ChakraLink>
                       </Link>
-                    )
-                  )}
+                    </motion.div>
+                  ))}
                 </SimpleGrid>
               </Box>
             ))}

@@ -2,10 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import api from '../utils/api';
 import {
-  Box, Heading, Text, Spinner, Table, Thead, Tbody, Tr, Th, Td, Input, Button, VStack, HStack, Link as ChakraLink, useColorModeValue, Checkbox, CheckboxGroup, Stack, IconButton, Skeleton, Badge, Image as ChakraImage, Select
+  Box, Heading, Text, Spinner, Table, Thead, Tbody, Tr, Th, Td, Input, Button, VStack, HStack, Link as ChakraLink, useColorModeValue, Checkbox, CheckboxGroup, Stack, IconButton, Skeleton, Badge, Image as ChakraImage, Select, Alert, AlertIcon
 } from '@chakra-ui/react';
 import Link from 'next/link';
 import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
+import { motion } from 'framer-motion';
 
 function groupEventsByMonth(events) {
   const groups = {};
@@ -51,17 +52,12 @@ export default function EventsPage() {
   const [endDate, setEndDate] = useState('');
   const [selectedRaceTypes, setSelectedRaceTypes] = useState([]);
 
-  // Debounce filters
-  const [debouncedFilters, setDebouncedFilters] = useState({});
-  const debounceTimeout = useRef();
-  useEffect(() => {
-    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-    debounceTimeout.current = setTimeout(() => {
-      setDebouncedFilters({ name, location, startDate, endDate, selectedRaceTypes });
-      setCurrentPage(1); // Reset to page 1 on filter change
-    }, 400);
-    return () => clearTimeout(debounceTimeout.current);
-  }, [name, location, startDate, endDate, selectedRaceTypes]);
+  // Sorting
+  const [sortField, setSortField] = useState('date'); // 'date', 'name', 'location'
+  const [sortDirection, setSortDirection] = useState('asc'); // 'asc', 'desc'
+
+  // 1. Reset to page 1 when filters or sort options change
+  useEffect(() => { setCurrentPage(1); }, [name, location, startDate, endDate, selectedRaceTypes, sortField, sortDirection]);
 
   // Fetch events when filters or page changes
   useEffect(() => {
@@ -69,11 +65,11 @@ export default function EventsPage() {
     setLoading(true);
     setError('');
     const params = { cityId, page: currentPage, limit };
-    if (debouncedFilters.name) params.name = debouncedFilters.name;
-    if (debouncedFilters.location) params.location = debouncedFilters.location;
-    if (debouncedFilters.startDate) params.startDate = debouncedFilters.startDate;
-    if (debouncedFilters.endDate) params.endDate = debouncedFilters.endDate;
-    (debouncedFilters.selectedRaceTypes || []).forEach(type => { params[type] = true; });
+    if (name) params.name = name;
+    if (location) params.location = location;
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    (selectedRaceTypes || []).forEach(type => { params[type] = true; });
     api.get('/events/by-city-date', { params })
       .then(res => {
         setEvents(res.data.events || res.data); // support both array and paginated object
@@ -82,12 +78,11 @@ export default function EventsPage() {
       .catch(() => setError('大会リストの取得に失敗しました'))
       .finally(() => setLoading(false));
     // eslint-disable-next-line
-  }, [cityId, debouncedFilters, currentPage, limit]);
+  }, [cityId, name, location, startDate, endDate, selectedRaceTypes, currentPage, limit]);
 
   // When the user clicks the search button, immediately update debounced filters and reset page
   const handleSearch = () => {
     setCurrentPage(1);
-    setDebouncedFilters({ name, location, startDate, endDate, selectedRaceTypes });
   };
 
   const handlePageChange = (newPage) => {
@@ -112,6 +107,25 @@ export default function EventsPage() {
     endDate && { label: `終了日: ${endDate}` },
     ...selectedRaceTypes.map(type => ({ label: raceTypes.find(r => r.key === type)?.label })),
   ].filter(Boolean);
+
+  // Sorting logic
+  const sortedEvents = [...events].sort((a, b) => {
+    let comparison = 0;
+    if (sortField === 'date') {
+      comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+    } else if (sortField === 'name') {
+      comparison = a.name.localeCompare(b.name);
+    } else if (sortField === 'location') {
+      comparison = a.location.localeCompare(b.location);
+    }
+    return sortDirection === 'asc' ? comparison : -comparison;
+  });
+
+  // Remove frontend slicing for pagination
+  // Use backend totalPages for pagination controls if available
+  // When currentPage changes, fetch new data from backend
+  const totalFilteredEvents = sortedEvents.length;
+  const totalPagesToShow = Math.max(1, Math.ceil(totalFilteredEvents / limit));
 
   return (
     <Box maxW="1200px" mx="auto" mt={10}>
@@ -147,30 +161,39 @@ export default function EventsPage() {
         </VStack>
       </Box>
       {loading ? (
-        <Box>
-          {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} height="40px" mb={2} borderRadius="md" />
-          ))}
+        <Box minH="240px" display="flex" alignItems="center" justifyContent="center">
+          <Spinner size="xl" color="blue.500" />
         </Box>
       ) : error ? (
-        <Text color="red.500">{error}</Text>
+        <Alert status="error" borderRadius="md" mt={4}>
+          <AlertIcon />
+          {error}
+        </Alert>
       ) : (
         <Box overflowX="auto">
-          {Object.entries(groupEventsByMonth(events)).length === 0 ? (
+          {sortedEvents.length === 0 ? (
             <VStack py={10} spacing={4} w="100%">
               <ChakraImage src={defaultNoResultsImg} alt="No results" boxSize="120px" />
-              <Text fontSize="lg" color="gray.500">該当する大会がありません</Text>
+              <Text fontSize="lg" color="gray.500">
+                該当する大会がありません
+              </Text>
             </VStack>
-          ) : Object.entries(groupEventsByMonth(events)).map(([month, monthEvents]) => (
+          ) : Object.entries(groupEventsByMonth(sortedEvents)).map(([month, monthEvents], monthIdx) => (
             <Box key={month} mb={8}>
               <Box bg={useColorModeValue('gray.100', 'gray.700')} px={2} py={1} borderRadius="md" mb={2} fontWeight="bold">{month}の大会</Box>
               <Box overflowX="auto">
                 <Table variant="simple" size="sm" sx={{ minWidth: '900px' }}>
                   <Thead bg="blue.900" position="sticky" top={0} zIndex={1}>
                     <Tr>
-                      <Th color="white">開催日</Th>
-                      <Th color="white">大会名</Th>
-                      <Th color="white">開催地</Th>
+                      <Th color="white" onClick={() => setSortField('date')} cursor="pointer" _hover={{ textDecoration: 'underline' }}>
+                        開催日 {sortField === 'date' && sortDirection === 'asc' ? '↑' : sortField === 'date' && sortDirection === 'desc' ? '↓' : ''}
+                      </Th>
+                      <Th color="white" onClick={() => setSortField('name')} cursor="pointer" _hover={{ textDecoration: 'underline' }}>
+                        大会名 {sortField === 'name' && sortDirection === 'asc' ? '↑' : sortField === 'name' && sortDirection === 'desc' ? '↓' : ''}
+                      </Th>
+                      <Th color="white" onClick={() => setSortField('location')} cursor="pointer" _hover={{ textDecoration: 'underline' }}>
+                        開催地 {sortField === 'location' && sortDirection === 'asc' ? '↑' : sortField === 'location' && sortDirection === 'desc' ? '↓' : ''}
+                      </Th>
                       <Th color="white">5km</Th>
                       <Th color="white">10km</Th>
                       <Th color="white">ハーフ</Th>
@@ -184,8 +207,25 @@ export default function EventsPage() {
                     </Tr>
                   </Thead>
                   <Tbody>
-                    {monthEvents.map(event => (
-                      <Tr key={event.id}>
+                    {monthEvents.map((event, eventIdx) => (
+                      <motion.tr
+                        key={event.id}
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.05 * eventIdx, duration: 0.5, type: 'spring' }}
+                        style={{
+                          background: 'white',
+                          borderRadius: '12px',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                          marginBottom: '8px',
+                          cursor: 'pointer',
+                          transition: 'box-shadow 0.2s, transform 0.2s',
+                        }}
+                        whileHover={{
+                          boxShadow: '0 4px 16px rgba(0,0,0,0.13)',
+                          // scale: 1.01, // Removed to prevent overflow-x bar
+                        }}
+                      >
                         <Td>{event.date ? event.date.slice(0, 10) : ''}</Td>
                         <Td>
                           <Link href={`${event.link_url}`} passHref>
@@ -203,7 +243,7 @@ export default function EventsPage() {
                         <Td>{event.timed ? '◯' : ''}</Td>
                         <Td>{event.relay ? '◯' : ''}</Td>
                         <Td>{event.trail ? '◯' : ''}</Td>
-                      </Tr>
+                      </motion.tr>
                     ))}
                   </Tbody>
                 </Table>
@@ -211,14 +251,39 @@ export default function EventsPage() {
             </Box>
           ))}
           {/* Pagination Controls */}
-          <HStack justify="center" mt={6} spacing={2}>
-            <IconButton icon={<ChevronLeftIcon />} aria-label="前のページ" onClick={() => handlePageChange(currentPage - 1)} isDisabled={currentPage === 1} />
-            <Text>{currentPage} / {totalPages}</Text>
-            <IconButton icon={<ChevronRightIcon />} aria-label="次のページ" onClick={() => handlePageChange(currentPage + 1)} isDisabled={currentPage === totalPages} />
-            <Select width="80px" value={limit} onChange={e => { setLimit(Number(e.target.value)); setCurrentPage(1); }} aria-label="表示件数">
-              {[10, 20, 50].map(n => <option key={n} value={n}>{n}件</option>)}
-            </Select>
-          </HStack>
+          <Box mt={6} display="flex" justifyContent="center" alignItems="center">
+            <Button
+              onClick={() => handlePageChange(currentPage - 1)}
+              isDisabled={currentPage === 1}
+              mr={2}
+              aria-label="前のページ"
+            >
+              前へ
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <Button
+                key={i + 1}
+                onClick={() => handlePageChange(i + 1)}
+                colorScheme={currentPage === i + 1 ? 'blue' : 'gray'}
+                variant={currentPage === i + 1 ? 'solid' : 'outline'}
+                mx={1}
+                aria-label={`ページ${i + 1}`}
+              >
+                {i + 1}
+              </Button>
+            ))}
+            <Button
+              onClick={() => handlePageChange(currentPage + 1)}
+              isDisabled={currentPage === totalPages}
+              ml={2}
+              aria-label="次のページ"
+            >
+              次へ
+            </Button>
+          </Box>
+          <Select width="80px" value={limit} onChange={e => { setLimit(Number(e.target.value)); setCurrentPage(1); }} aria-label="表示件数">
+            {[1, 10, 20, 30, 40, 50].map(n => <option key={n} value={n}>{n}件</option>)}
+          </Select>
         </Box>
       )}
     </Box>
