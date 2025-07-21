@@ -7,6 +7,7 @@ const eventRoutes = require('./routes/event');
 const userRoutes = require('./routes/user');
 const adminRoutes = require('./routes/admin');
 const paymentRoutes = require('./routes/payment');
+const contactRoutes = require('./routes/contact');
 // require('./cron/eventReminders');
 const dotenv = require('dotenv');
 const bcrypt = require('bcrypt');
@@ -73,6 +74,7 @@ app.use('/events', eventRoutes);
 app.use('/user', userRoutes);
 app.use('/admin', adminRoutes);
 app.use('/payment', paymentRoutes);
+app.use('/contact', contactRoutes);
 
 sequelize.sync().then(() => {
   createDefaultAdmin(); // Call the function here
