@@ -12,10 +12,8 @@ const contactRoutes = require('./routes/contact');
 const dotenv = require('dotenv');
 const bcrypt = require('bcrypt');
 
-
 // Load environment variables
 dotenv.config();
-
 // Function to create default admin account
 const createDefaultAdmin = async () => {
   try {

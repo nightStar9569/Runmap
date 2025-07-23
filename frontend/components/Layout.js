@@ -51,9 +51,7 @@ import {
   FaCog,
   FaHeart,
   FaRunning,
-  FaTrophy,
-  FaUsers,
-  FaInfoCircle
+  FaEnvelope
 } from 'react-icons/fa';
 import api from '../utils/api';
 
@@ -222,6 +220,23 @@ export default function Layout({ children }) {
           >
             <Icon as={FaPage4} />
             <Text display={{ base: 'none', md: 'block' }}>マイページ</Text>
+          </ChakraLink>
+        )}
+
+        {isLoggedIn && (
+          <ChakraLink
+            as={Link}
+            href="/send-mail"
+            color={textColor}
+            fontWeight="500"
+            display="flex"
+            alignItems="center"
+            gap={2}
+            _hover={{ color: 'blue.500', transform: 'translateY(-1px)' }}
+            transition="all 0.2s"
+          >
+            <Icon as={FaEnvelope} />
+            <Text display={{ base: 'none', md: 'block' }}>Send Email</Text>
           </ChakraLink>
         )}
 
@@ -467,6 +482,20 @@ export default function Layout({ children }) {
                     _hover={{ bg: 'purple.50' }}
                   >
                     管理画面
+                  </Button>
+                )}
+
+                {isLoggedIn && (
+                  <Button
+                    variant="ghost"
+                    justifyContent="start"
+                    leftIcon={<FaEnvelope />}
+                    onClick={() => {
+                      onClose();
+                      router.push('/send-mail');
+                    }}
+                  >
+                    Send Email
                   </Button>
                 )}
 

@@ -1,40 +1,46 @@
-const nodemailer = require('nodemailer');
 const Joi = require('joi');
 const dotenv = require('dotenv');
-
 dotenv.config();
 
-exports.sendContactMessage = async (req, res) => {
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+exports.sendMail = async (req, res) => {  
+  const { to, subject, message } = req.body;
+  console.log("=>0", to, subject, message);
+  
+  // Validation schema
   const schema = Joi.object({
-    name: Joi.string().min(2).max(50).required(),
-    email: Joi.string().email().required(),
-    message: Joi.string().min(5).max(2000).required(),
+    to: Joi.string().email().required(),
+    subject: Joi.string().min(1).max(200).required(),
+    message: Joi.string().min(1).max(5000).required(),
   });
+  console.log("=>1", schema);
+  // Validate request
   const { error } = schema.validate(req.body);
   if (error) {
     return res.status(400).json({ message: error.details[0].message });
   }
-  const { name, email, message } = req.body;
-
+  // Prepare email
+  const msg = {
+    to: to,
+    from: process.env.SENDGRID_FROM_EMAIL || 'goodsman207@gmail.com', // Use env variable
+    subject: subject,
+    text: message, // Changed from 'message' to 'text'
+    html: `<p>${message}</p>`, // Optional HTML version
+  };
+  console.log("=>3", msg);  
   try {
-    // Configure nodemailer (using Gmail SMTP)
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.CONTACT_EMAIL_USER,
-        pass: process.env.CONTACT_EMAIL_PASS, // Set this in your .env file
-      },
+    await sgMail.send(msg);
+    res.json({ message: 'メールが送信されました。' });
+  } catch (error) {
+    console.error('SendGrid error:', error);
+    if (error.response) {
+      console.error(error.response.body);
+    }
+    res.status(500).json({ 
+      message: 'メール送信に失敗しました。', 
+      error: error.message 
     });
-
-    await transporter.sendMail({
-      from: email,
-      to: process.env.CONTACT_EMAIL_USER,
-      subject: `【RunMapお問い合わせ】${name}さんより`,
-      text: `お名前: ${name}\nメール: ${email}\n\n${message}`,
-    });
-
-    res.json({ message: 'お問い合わせが送信されました。' });
-  } catch (err) {
-    res.status(500).json({ message: 'メール送信に失敗しました', error: err.message });
   }
-}; 
+};
